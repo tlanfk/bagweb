@@ -37,9 +37,11 @@ interface DragInteraction {
   markerId?: string;
 }
 
-const MIN_ZOOM = 1;
+const MIN_ZOOM = 0.675;
 const MAX_ZOOM = 5;
-const ZOOM_FACTOR = 1.14;
+const INITIAL_ZOOM = 0.75;
+const ZOOM_FACTOR = 1.2;
+const FULL_MARKER_SCALE_ZOOM = 1.69;
 const DRAG_THRESHOLD = 5;
 
 function clampZoom(value: number): number {
@@ -68,7 +70,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const [selectedMapId, setSelectedMapId] = useState<MapId>("erangel");
   const [selectedToolType, setSelectedToolType] = useState<MarkerType>("car");
   const [selectedMarkerKey, setSelectedMarkerKey] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const [pan, setPan] = useState<PanState>({ x: 0, y: 0 });
   const [viewport, setViewport] = useState<ViewportMetrics>({ width: 0, height: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -137,7 +139,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }, []);
 
   useEffect(() => {
-    setZoom(1);
+    setZoom(INITIAL_ZOOM);
     setPan({ x: 0, y: 0 });
     setSelectedMarkerKey(null);
     suppressClickRef.current = false;
@@ -172,6 +174,11 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }, [viewport.height, viewport.width]);
 
   const renderedSize = baseSize * zoom;
+  const markerScale = clampValue(
+    0.9 + ((zoom - MIN_ZOOM) / (FULL_MARKER_SCALE_ZOOM - MIN_ZOOM)) * 0.1,
+    0.9,
+    1,
+  );
   const defaultLeft = (viewport.width - renderedSize) / 2;
   const defaultTop = (viewport.height - renderedSize) / 2;
   const contentLeft = defaultLeft + pan.x;
@@ -574,7 +581,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                 key={definition.type}
                 type="button"
                 draggable={editable}
-                className={`marker-row ${selectedToolType === definition.type ? "is-active" : ""} ${editable ? "is-draggable" : ""} ${visibleTypes[definition.type] ? "" : "is-hidden"}`}
+                className={`marker-row ${visibleTypes[definition.type] ? "is-visible" : "is-hidden"} ${editable ? "is-draggable" : ""} ${editable && selectedToolType === definition.type ? "is-tool-selected" : ""}`}
                 onClick={() => {
                   setSelectedToolType(definition.type);
                   setVisibleTypes((current) => ({
@@ -724,11 +731,14 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                   type="button"
                   data-marker="true"
                   className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--ring" : ""}`}
-                  style={{
-                    left: `${(marker.x / MAP_SIZE) * 100}%`,
-                    top: `${(marker.y / MAP_SIZE) * 100}%`,
-                    borderColor: marker.color,
-                  }}
+                  style={
+                    {
+                      left: `${(marker.x / MAP_SIZE) * 100}%`,
+                      top: `${(marker.y / MAP_SIZE) * 100}%`,
+                      borderColor: marker.color,
+                      "--marker-scale": markerScale,
+                    } as CSSProperties
+                  }
                   onPointerDown={(event) => beginMarkerDrag(event, marker.type, marker.id)}
                   onClick={(event) => {
                     event.stopPropagation();
