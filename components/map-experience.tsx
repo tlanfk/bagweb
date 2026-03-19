@@ -523,6 +523,11 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
     }));
   }
 
+  function handleGoogleLogin() {
+    setIsSigningIn(true);
+    void signIn("google", { callbackUrl: "/admin" });
+  }
+
   return (
     <div
       ref={shellRef}
@@ -608,18 +613,28 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                 type="button"
                 className="action-button action-button--google"
                 disabled={isSigningIn}
-                onClick={() => {
-                  setIsSigningIn(true);
-                  void signIn("google", { callbackUrl: "/admin" });
-                }}
+                onClick={handleGoogleLogin}
               >
                 {isSigningIn ? "로그인 중" : "Google로 로그인"}
               </button>
             )
           ) : (
-            <Link href="/admin" className="action-button action-button--link">
-              {canEdit ? "관리자 편집" : "관리자 로그인"}
-            </Link>
+            <>
+              {access.isSignedIn ? (
+                <Link href="/admin" className="action-button action-button--link">
+                  {canEdit ? "관리자 편집" : "관리자 화면"}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="action-button action-button--google"
+                  disabled={isSigningIn}
+                  onClick={handleGoogleLogin}
+                >
+                  {isSigningIn ? "로그인 중" : "관리자 로그인"}
+                </button>
+              )}
+            </>
           )}
         </section>
       </aside>
