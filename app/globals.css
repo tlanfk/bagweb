@@ -1,4 +1,5 @@
 :root {
+  --sidebar-width: 276px;
   --bg: #120c09;
   --panel: rgba(34, 21, 15, 0.94);
   --panel-soft: rgba(58, 37, 25, 0.9);
@@ -60,8 +61,7 @@ img {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  position: relative;
   height: 100vh;
   overflow: hidden;
   user-select: none;
@@ -69,20 +69,59 @@ img {
 }
 
 .sidebar {
-  display: grid;
-  grid-template-rows: auto auto 1fr;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   padding: 18px 16px;
+  width: var(--sidebar-width);
   height: 100vh;
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(26, 17, 12, 0.96), rgba(17, 11, 8, 0.98)),
     radial-gradient(circle at top, rgba(194, 138, 74, 0.12), transparent 42%);
   border-right: 1px solid rgba(214, 176, 110, 0.1);
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
 }
 
-.sidebar-block,
-.sidebar-actions {
+.sidebar.is-collapsed {
+  transform: translateX(calc(-100% - 18px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-scroll {
+  display: grid;
+  gap: 18px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(194, 138, 74, 0.72) rgba(26, 17, 12, 0.5);
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(26, 17, 12, 0.55);
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(26, 17, 12, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(236, 189, 123, 0.84), rgba(138, 89, 46, 0.92));
+}
+
+.sidebar-block {
   background: linear-gradient(180deg, rgba(62, 39, 27, 0.92), rgba(30, 20, 15, 0.92));
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -97,11 +136,13 @@ img {
   padding-top: 14px;
 }
 
-.sidebar-actions {
-  align-self: end;
+.sidebar-block--controls {
+  padding-top: 14px;
+}
+
+.sidebar-control-list {
   display: grid;
   gap: 10px;
-  padding: 12px;
 }
 
 .eyebrow {
@@ -111,6 +152,7 @@ img {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  text-align: left;
 }
 
 .map-list,
@@ -141,6 +183,7 @@ img {
   align-items: center;
   gap: 12px;
   width: 100%;
+  text-align: left;
 }
 
 .map-item,
@@ -241,6 +284,17 @@ img {
   padding: 0 16px;
 }
 
+.action-button--toggle-check {
+  gap: 10px;
+  cursor: pointer;
+}
+
+.action-button--toggle-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #c28a4a;
+}
+
 .action-button--primary,
 .action-button--google,
 .action-button--link {
@@ -255,11 +309,35 @@ img {
   transform: none;
 }
 
+.menu-toggle {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.menu-toggle__icon {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .workspace {
   padding: 0;
   min-width: 0;
   height: 100vh;
   overflow: hidden;
+  width: 100%;
 }
 
 .map-viewport {
@@ -277,29 +355,6 @@ img {
 
 .map-viewport.is-dragging {
   cursor: grabbing;
-}
-
-.viewport-toggle {
-  position: absolute;
-  top: 18px;
-  left: 18px;
-  z-index: 20;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  padding: 0 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(236, 189, 123, 0.18);
-  background: rgba(22, 16, 12, 0.92);
-  color: var(--text);
-  box-shadow: var(--shadow);
-}
-
-.viewport-toggle input {
-  width: 16px;
-  height: 16px;
-  accent-color: #c28a4a;
 }
 
 .map-canvas {
@@ -399,9 +454,9 @@ img {
 
 .viewport-controls {
   position: absolute;
-  inset: auto 18px 18px 18px;
+  inset: auto 18px 18px auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   pointer-events: none;
 }
 
@@ -429,23 +484,27 @@ img {
 }
 
 @media (max-width: 1100px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-  }
-
   .sidebar {
-    grid-template-rows: auto auto auto;
     height: auto;
+    width: min(var(--sidebar-width), calc(100vw - 24px));
     max-height: 38vh;
     border-right: 0;
     border-bottom: 1px solid rgba(214, 176, 110, 0.1);
+  }
+
+  .sidebar-scroll {
+    max-height: 100%;
   }
 
   .map-viewport {
     height: 58vh;
     border-left: 0;
     border-top: 1px solid var(--line);
+  }
+
+  .menu-toggle {
+    left: 12px;
+    bottom: 12px;
   }
 }
 

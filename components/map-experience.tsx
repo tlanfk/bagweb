@@ -94,6 +94,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const [access, setAccess] = useState<AccessContext>(initialAccess);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [iconBackgroundEnabled, setIconBackgroundEnabled] = useState(true);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [visibleTypes, setVisibleTypes] = useState<Record<MarkerType, boolean>>({
     car: true,
     boat: true,
@@ -589,113 +590,141 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   return (
     <div
       ref={shellRef}
-      className="app-shell"
+      className={`app-shell ${isSidebarVisible ? "" : "is-sidebar-collapsed"}`}
       onContextMenu={(event) => event.preventDefault()}
     >
-      <aside ref={sidebarRef} className="sidebar">
-        <section className="sidebar-block">
-          <p className="eyebrow">MAP LIST</p>
-          <div className="map-list">
-            {MAPS.map((map) => (
-              <button
-                key={map.id}
-                type="button"
-                className={`map-item ${selectedMapId === map.id ? "is-active" : ""}`}
-                onClick={() => setSelectedMapId(map.id)}
-              >
-                {map.name}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="sidebar-block sidebar-block--markers">
-          <div className="marker-list">
-            {MARKER_DEFINITIONS.map((definition) => (
-              <button
-                key={definition.type}
-                type="button"
-                draggable={editable}
-                className={`marker-row ${visibleTypes[definition.type] ? "is-visible" : "is-hidden"} ${editable ? "is-draggable" : ""} ${editable && selectedToolType === definition.type ? "is-tool-selected" : ""}`}
-                onClick={() => {
-                  setSelectedToolType(definition.type);
-                  setVisibleTypes((current) => ({
-                    ...current,
-                    [definition.type]: !current[definition.type],
-                  }));
-                }}
-                onDragStart={(event) => {
-                  if (!editable) {
-                    event.preventDefault();
-                    return;
-                  }
-
-                  event.dataTransfer.setData("text/plain", definition.type);
-                  event.dataTransfer.effectAllowed = "copy";
-                  setSelectedToolType(definition.type);
-                }}
-              >
-                {definition.type === "key" ? (
-                  <span
-                    className="ring-icon marker-row__icon ring-icon--sidebar"
-                    style={{ "--icon-color": definition.color } as CSSProperties}
-                  />
-                ) : (
-                  <span className="icon-mask marker-row__icon" style={iconStyle(definition.iconSrc, definition.color)} />
-                )}
-                <span>{definition.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="sidebar-actions">
-          {isAdminPage ? (
-            access.isSignedIn ? (
-              <>
-                {isSuperAdmin ? (
-                  <button type="button" className="action-button" onClick={handleAdminEmailsEdit}>
-                    권한 이메일
+      <aside ref={sidebarRef} className={`sidebar ${isSidebarVisible ? "" : "is-collapsed"}`}>
+        {isSidebarVisible ? (
+          <div className="sidebar-scroll">
+            <section className="sidebar-block">
+              <p className="eyebrow">MAP LIST</p>
+              <div className="map-list">
+                {MAPS.map((map) => (
+                  <button
+                    key={map.id}
+                    type="button"
+                    className={`map-item ${selectedMapId === map.id ? "is-active" : ""}`}
+                    onClick={() => setSelectedMapId(map.id)}
+                  >
+                    {map.name}
                   </button>
-                ) : null}
-                <button
-                  type="button"
-                  className="action-button"
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                >
-                  로그아웃
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="action-button action-button--google"
-                disabled={isSigningIn}
-                onClick={handleGoogleLogin}
-              >
-                {isSigningIn ? "로그인 중" : "Google로 로그인"}
-              </button>
-            )
-          ) : (
-            <>
-              {access.isSignedIn ? (
-                <Link href="/admin" className="action-button action-button--link">
-                  {canEdit ? "관리자 편집" : "관리자 화면"}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="action-button action-button--google"
-                  disabled={isSigningIn}
-                  onClick={handleGoogleLogin}
-                >
-                  {isSigningIn ? "로그인 중" : "관리자 로그인"}
-                </button>
-              )}
-            </>
-          )}
-        </section>
+                ))}
+              </div>
+            </section>
+
+            <section className="sidebar-block sidebar-block--markers">
+              <div className="marker-list">
+                {MARKER_DEFINITIONS.map((definition) => (
+                  <button
+                    key={definition.type}
+                    type="button"
+                    draggable={editable}
+                    className={`marker-row ${visibleTypes[definition.type] ? "is-visible" : "is-hidden"} ${editable ? "is-draggable" : ""} ${editable && selectedToolType === definition.type ? "is-tool-selected" : ""}`}
+                    onClick={() => {
+                      setSelectedToolType(definition.type);
+                      setVisibleTypes((current) => ({
+                        ...current,
+                        [definition.type]: !current[definition.type],
+                      }));
+                    }}
+                    onDragStart={(event) => {
+                      if (!editable) {
+                        event.preventDefault();
+                        return;
+                      }
+
+                      event.dataTransfer.setData("text/plain", definition.type);
+                      event.dataTransfer.effectAllowed = "copy";
+                      setSelectedToolType(definition.type);
+                    }}
+                  >
+                    {definition.type === "key" ? (
+                      <span
+                        className="ring-icon marker-row__icon ring-icon--sidebar"
+                        style={{ "--icon-color": definition.color } as CSSProperties}
+                      />
+                    ) : (
+                      <span className="icon-mask marker-row__icon" style={iconStyle(definition.iconSrc, definition.color)} />
+                    )}
+                    <span>{definition.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="sidebar-block sidebar-block--controls">
+              <div className="sidebar-control-list">
+                {isAdminPage ? (
+                  access.isSignedIn ? (
+                    <>
+                      {canEdit ? (
+                        <button
+                          type="button"
+                          className={`action-button action-button--toggle ${editMode ? "is-active" : ""}`}
+                          onClick={handleEditToggle}
+                        >
+                          편집
+                        </button>
+                      ) : null}
+                      {isSuperAdmin ? (
+                        <button type="button" className="action-button" onClick={handleAdminEmailsEdit}>
+                          권한 이메일
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="action-button"
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                      >
+                        로그아웃
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="action-button action-button--google"
+                      disabled={isSigningIn}
+                      onClick={handleGoogleLogin}
+                    >
+                      {isSigningIn ? "로그인 중" : "Google로 로그인"}
+                    </button>
+                  )
+                ) : access.isSignedIn ? (
+                  <Link href="/admin" className="action-button action-button--link">
+                    {canEdit ? "관리자 편집" : "관리자 화면"}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="action-button action-button--google"
+                    disabled={isSigningIn}
+                    onClick={handleGoogleLogin}
+                  >
+                    {isSigningIn ? "로그인 중" : "관리자 로그인"}
+                  </button>
+                )}
+
+                <label className="action-button action-button--toggle-check">
+                  <input
+                    type="checkbox"
+                    checked={iconBackgroundEnabled}
+                    onChange={(event) => setIconBackgroundEnabled(event.target.checked)}
+                  />
+                  <span>아이콘 배경</span>
+                </label>
+              </div>
+            </section>
+          </div>
+        ) : null}
       </aside>
+
+      <button
+        type="button"
+        className="menu-toggle"
+        onClick={() => setIsSidebarVisible((current) => !current)}
+        aria-label={isSidebarVisible ? "메뉴 닫기" : "메뉴 열기"}
+      >
+        <Image src="/vector/menu.svg" alt="" width={22} height={22} className="menu-toggle__icon" />
+      </button>
 
       <main className="workspace">
         <div
@@ -735,15 +764,6 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
             addMarkerAt(event.clientX, event.clientY, droppedType);
           }}
         >
-          <label className="viewport-toggle">
-            <input
-              type="checkbox"
-              checked={iconBackgroundEnabled}
-              onChange={(event) => setIconBackgroundEnabled(event.target.checked)}
-            />
-            <span>아이콘 배경</span>
-          </label>
-
           <div
             className={`map-canvas ${editable ? "is-editable" : ""}`}
             style={{
@@ -808,13 +828,6 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
 
           {isAdminPage && canEdit ? (
             <div className="viewport-controls">
-              <button
-                type="button"
-                className={`viewport-button viewport-button--edit ${editMode ? "is-active" : ""}`}
-                onClick={handleEditToggle}
-              >
-                편집
-              </button>
               <button
                 type="button"
                 className="viewport-button viewport-button--save"
