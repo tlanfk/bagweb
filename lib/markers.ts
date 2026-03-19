@@ -21,9 +21,19 @@ export function createEmptyGroups(): MapMarkerGroups {
 }
 
 export function createEmptyCollection(): MarkerCollection {
+  const now = new Date().toISOString();
+
   return {
     version: 1,
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
+    mapUpdatedAt: {
+      erangel: now,
+      miramar: now,
+      taego: now,
+      deston: now,
+      vikendi: now,
+      rondo: now,
+    },
     adminEmails: [],
     maps: {
       erangel: createEmptyGroups(),
@@ -115,6 +125,11 @@ export function normalizeMarkerCollection(input: unknown): MarkerCollection {
     typeof input.updatedAt === "string" && input.updatedAt.length > 0
       ? input.updatedAt
       : new Date().toISOString();
+  for (const mapId of MAP_IDS) {
+    const rawUpdatedAt = isObject(input.mapUpdatedAt) ? input.mapUpdatedAt[mapId] : undefined;
+    base.mapUpdatedAt[mapId] =
+      typeof rawUpdatedAt === "string" && rawUpdatedAt.length > 0 ? rawUpdatedAt : base.updatedAt;
+  }
   base.adminEmails = Array.isArray(input.adminEmails)
     ? input.adminEmails
         .filter((item): item is string => typeof item === "string")
@@ -142,6 +157,7 @@ export function upsertMarker(
   }
 
   next.updatedAt = new Date().toISOString();
+  next.mapUpdatedAt[mapId] = next.updatedAt;
 
   return next;
 }
@@ -155,5 +171,18 @@ export function removeMarker(
   const next = cloneCollection(collection);
   next.maps[mapId][type] = next.maps[mapId][type].filter((marker) => marker.id !== markerId);
   next.updatedAt = new Date().toISOString();
+  next.mapUpdatedAt[mapId] = next.updatedAt;
+  return next;
+}
+
+export function replaceMapGroups(
+  collection: MarkerCollection,
+  mapId: MapId,
+  groups: MapMarkerGroups,
+): MarkerCollection {
+  const next = cloneCollection(collection);
+  next.maps[mapId] = normalizeGroups(groups);
+  next.updatedAt = new Date().toISOString();
+  next.mapUpdatedAt[mapId] = next.updatedAt;
   return next;
 }

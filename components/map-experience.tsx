@@ -191,6 +191,8 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }, [currentMapGroups]);
   const visibleMarkers = currentMarkers.filter((marker) => visibleTypes[marker.type]);
 
+  const hasCurrentMapUnsavedChanges =
+    JSON.stringify(sourceCollection.maps[selectedMapId]) !== JSON.stringify(draftCollection.maps[selectedMapId]);
   const hasUnsavedChanges = JSON.stringify(sourceCollection.maps) !== JSON.stringify(draftCollection.maps);
 
   function clampPan(nextPan: PanState, nextZoom: number): PanState {
@@ -437,7 +439,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }, []);
 
   async function handleSave() {
-    if (!canEdit || !hasUnsavedChanges) {
+    if (!canEdit || !hasCurrentMapUnsavedChanges) {
       return;
     }
 
@@ -448,11 +450,23 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(draftCollection),
+      body: JSON.stringify({
+        mapId: selectedMapId,
+        groups: draftCollection.maps[selectedMapId],
+        lastKnownUpdatedAt: sourceCollection.mapUpdatedAt[selectedMapId],
+      }),
     });
 
     if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { message?: string } | null;
       setSaveState("error");
+
+      if (result?.message) {
+        window.alert(result.message);
+      } else {
+        window.alert("저장에 실패했습니다.");
+      }
+
       return;
     }
 
@@ -749,7 +763,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
               <button
                 type="button"
                 className="viewport-button viewport-button--save"
-                disabled={!hasUnsavedChanges || saveState === "saving"}
+                disabled={!hasCurrentMapUnsavedChanges || saveState === "saving"}
                 onClick={handleSave}
               >
                 {saveState === "saving" ? "저장 중" : "저장하기"}

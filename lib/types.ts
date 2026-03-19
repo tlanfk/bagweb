@@ -46,6 +46,7 @@ export type MapMarkerGroups = Record<MarkerType, MarkerPoint[]>;
 export interface MarkerCollection {
   version: number;
   updatedAt: string;
+  mapUpdatedAt: Record<MapId, string>;
   adminEmails: string[];
   maps: Record<MapId, MapMarkerGroups>;
 }
