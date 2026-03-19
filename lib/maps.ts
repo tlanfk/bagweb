@@ -14,8 +14,8 @@ export const MAPS: MapMeta[] = [
 export const MARKER_DEFINITIONS: MarkerDefinition[] = [
   { type: "car", label: "자동차", shortLabel: "CAR", iconSrc: "/vector/car.svg", color: "#f4c434" },
   { type: "boat", label: "배", shortLabel: "BOAT", iconSrc: "/vector/boat.svg", color: "#43c766" },
-  { type: "gas", label: "주유소", shortLabel: "GAS", iconSrc: "/vector/gas.svg", color: "#f1c842" },
+  { type: "gas", label: "주유소", shortLabel: "GAS", iconSrc: "/vector/gas.svg", color: "#ff62b6" },
   { type: "plane", label: "글라이더", shortLabel: "GLD", iconSrc: "/vector/plane.svg", color: "#ef8d32" },
   { type: "garage", label: "차고", shortLabel: "GAR", iconSrc: "/vector/garage.svg", color: "#3d85f5" },
-  { type: "key", label: "비밀방", shortLabel: "KEY", iconSrc: "/vector/key.svg", color: "#e64e4e" },
+  { type: "key", label: "비밀방", shortLabel: "KEY", iconSrc: "/vector/key.svg", color: "#ff2b2b" },
 ];

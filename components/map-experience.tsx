@@ -43,6 +43,15 @@ const INITIAL_ZOOM = 0.75;
 const ZOOM_FACTOR = 1.2;
 const FULL_MARKER_SCALE_ZOOM = 1.69;
 const DRAG_THRESHOLD = 5;
+const ICON_BACKGROUND_STORAGE_KEY = "bagweb-icon-background-enabled";
+const MARKER_Z_INDEX: Record<MarkerType, number> = {
+  car: 600,
+  boat: 500,
+  key: 400,
+  plane: 300,
+  garage: 200,
+  gas: 100,
+};
 
 function clampZoom(value: number): number {
   return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(value.toFixed(3))));
@@ -84,6 +93,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [access, setAccess] = useState<AccessContext>(initialAccess);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [iconBackgroundEnabled, setIconBackgroundEnabled] = useState(true);
   const [visibleTypes, setVisibleTypes] = useState<Record<MarkerType, boolean>>({
     car: true,
     boat: true,
@@ -112,6 +122,31 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
       setIsSigningIn(false);
     }
   }, [access.isSignedIn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const saved = window.localStorage.getItem(ICON_BACKGROUND_STORAGE_KEY);
+
+    if (saved === "true") {
+      setIconBackgroundEnabled(true);
+      return;
+    }
+
+    if (saved === "false") {
+      setIconBackgroundEnabled(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(ICON_BACKGROUND_STORAGE_KEY, String(iconBackgroundEnabled));
+  }, [iconBackgroundEnabled]);
 
   useEffect(() => {
     const viewportElement = viewportRef.current;
@@ -700,6 +735,15 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
             addMarkerAt(event.clientX, event.clientY, droppedType);
           }}
         >
+          <label className="viewport-toggle">
+            <input
+              type="checkbox"
+              checked={iconBackgroundEnabled}
+              onChange={(event) => setIconBackgroundEnabled(event.target.checked)}
+            />
+            <span>아이콘 배경</span>
+          </label>
+
           <div
             className={`map-canvas ${editable ? "is-editable" : ""}`}
             style={{
@@ -730,13 +774,14 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                   key={markerKey}
                   type="button"
                   data-marker="true"
-                  className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--ring" : ""}`}
+                  className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--ring" : ""} ${!iconBackgroundEnabled && marker.type !== "key" ? "is-bg-disabled" : ""}`}
                   style={
                     {
                       left: `${(marker.x / MAP_SIZE) * 100}%`,
                       top: `${(marker.y / MAP_SIZE) * 100}%`,
                       borderColor: marker.color,
                       "--marker-scale": markerScale,
+                      zIndex: isSelected ? 1000 : MARKER_Z_INDEX[marker.type],
                     } as CSSProperties
                   }
                   onPointerDown={(event) => beginMarkerDrag(event, marker.type, marker.id)}

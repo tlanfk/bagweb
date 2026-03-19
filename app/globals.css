@@ -279,6 +279,29 @@ img {
   cursor: grabbing;
 }
 
+.viewport-toggle {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(236, 189, 123, 0.18);
+  background: rgba(22, 16, 12, 0.92);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.viewport-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #c28a4a;
+}
+
 .map-canvas {
   position: absolute;
   overflow: hidden;
@@ -331,6 +354,14 @@ img {
   box-shadow:
     0 0 0 2px rgba(223, 178, 109, 0.92),
     0 0 24px rgba(160, 187, 82, 0.28);
+}
+
+.map-marker.is-bg-disabled {
+  background: transparent;
+  box-shadow: none;
+  padding: 4px;
+  border: 0;
+  border-radius: 0;
 }
 
 .map-marker--ring {
