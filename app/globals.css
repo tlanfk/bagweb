@@ -77,7 +77,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 12px 16px;
+  padding: 12px 16px 88px;
   width: var(--sidebar-width);
   height: auto;
   max-height: 100dvh;
@@ -104,8 +104,8 @@ img {
   min-height: 0;
   overflow-y: auto;
   padding-right: 6px;
-  padding-bottom: 88px;
-  scroll-padding-bottom: 88px;
+  padding-bottom: 18px;
+  scroll-padding-bottom: 18px;
   scrollbar-width: thin;
   scrollbar-color: rgba(194, 138, 74, 0.72) rgba(26, 17, 12, 0.5);
 }
@@ -330,7 +330,9 @@ img {
 }
 
 .app-shell:not(.is-sidebar-collapsed) .menu-toggle {
+  position: absolute;
   left: 18px;
+  bottom: 18px;
 }
 
 .menu-toggle__icon {
@@ -528,9 +530,8 @@ img {
 }
 
 @media (max-height: 1080px) {
-  .sidebar-scroll {
-    padding-bottom: 112px;
-    scroll-padding-bottom: 112px;
+  .sidebar {
+    padding-bottom: 96px;
   }
 }
 
