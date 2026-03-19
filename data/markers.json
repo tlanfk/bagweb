@@ -1,10 +1,24 @@
 {
   "version": 1,
-  "updatedAt": "2026-03-19T05:12:47.086Z",
-  "adminEmails": [],
+  "updatedAt": "2026-03-19T05:58:17.727Z",
+  "adminEmails": [
+    "redacted@example.com",
+    "redacted@example.com"
+  ],
   "maps": {
     "erangel": {
-      "car": [],
+      "car": [
+        {
+          "id": "a117749c-13ac-45dd-9623-c2f6672a246e",
+          "x": 808,
+          "y": 1559
+        },
+        {
+          "id": "52f4b06a-c499-45a5-b951-67310ef09c02",
+          "x": 794,
+          "y": 1689
+        }
+      ],
       "boat": [],
       "gas": [],
       "plane": [],
