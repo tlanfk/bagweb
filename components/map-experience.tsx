@@ -459,7 +459,9 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
     const saved = (await response.json()) as MarkerCollection;
     setSourceCollection(cloneCollection(saved));
     setDraftCollection(cloneCollection(saved));
+    setSelectedMarkerKey(null);
     setSaveState("saved");
+    setEditMode(false);
   }
 
   function handleEditToggle() {
