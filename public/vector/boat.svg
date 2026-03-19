@@ -1,0 +1,8 @@
+<svg width="140" height="60" viewBox="0 0 140 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- 선체 : 적당히 길쭉한 밸런스 -->
+<path d="M5 30 C5 30 10 50 25 50 H120 L130 30 H5 Z" fill="black"/>
+<!-- 상부 구조물 : 분리형 윈드실드 및 선실 -->
+<path d="M35 30 V18 H50 V30 M58 30 V22 H90 V30" stroke="black" stroke-width="4" stroke-linejoin="round" fill="none"/>
+<!-- 디테일 요소 -->
+<rect x="38" y="10" width="4" height="8" fill="black"/>
+</svg>

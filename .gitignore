@@ -1,0 +1,13 @@
+.next
+node_modules
+.vercel
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+Deston.png
+Erangel.png
+Miramar.png
+Rondo.png
+Taego.png
+Vikendi.png

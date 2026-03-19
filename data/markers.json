@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "updatedAt": "2026-03-19T05:12:47.086Z",
+  "adminEmails": [],
+  "maps": {
+    "erangel": {
+      "car": [],
+      "boat": [],
+      "gas": [],
+      "plane": [],
+      "garage": [],
+      "key": []
+    },
+    "miramar": {
+      "car": [],
+      "boat": [],
+      "gas": [],
+      "plane": [],
+      "garage": [],
+      "key": []
+    },
+    "taego": {
+      "car": [],
+      "boat": [],
+      "gas": [],
+      "plane": [],
+      "garage": [],
+      "key": []
+    },
+    "deston": {
+      "car": [],
+      "boat": [],
+      "gas": [],
+      "plane": [],
+      "garage": [],
+      "key": []
+    },
+    "vikendi": {
+      "car": [],
+      "boat": [],
+      "gas": [],
+      "plane": [],
+      "garage": [],
+      "key": []
+    },
+    "rondo": {
+      "car": [],
+      "boat": [],
+      "gas": [],
+      "plane": [],
+      "garage": [],
+      "key": []
+    }
+  }
+}

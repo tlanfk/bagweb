@@ -1,0 +1,12 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- 주유기 본체 (세련된 각진 형태) -->
+<path d="M30 15 H60 L70 25 V90 H30 V15 Z" fill="black"/>
+<!-- 디지털 화면창 -->
+<rect x="38" y="28" width="24" height="20" rx="1" fill="white" fill-opacity="0.2"/>
+<!-- 주유 호스 -->
+<path d="M70 40 Q85 40 85 60 V80" stroke="black" stroke-width="5" fill="none" stroke-linecap="round"/>
+<!-- 하단 버튼 디테일 -->
+<circle cx="40" cy="55" r="2" fill="white" fill-opacity="0.5"/>
+<circle cx="50" cy="55" r="2" fill="white" fill-opacity="0.5"/>
+<circle cx="60" cy="55" r="2" fill="white" fill-opacity="0.5"/>
+</svg>
