@@ -68,6 +68,45 @@ function iconStyle(iconSrc: string, color: string): CSSProperties {
   } as CSSProperties;
 }
 
+function createDragPreview(iconSrc: string, color: string, isRing: boolean): HTMLDivElement | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const preview = document.createElement("div");
+  preview.style.width = "34px";
+  preview.style.height = "34px";
+  preview.style.pointerEvents = "none";
+  preview.style.display = "flex";
+  preview.style.alignItems = "center";
+  preview.style.justifyContent = "center";
+  preview.style.background = "transparent";
+
+  const icon = document.createElement("span");
+  icon.style.display = "block";
+  icon.style.width = "34px";
+  icon.style.height = "34px";
+
+  if (isRing) {
+    icon.style.borderRadius = "999px";
+    icon.style.border = `4px solid ${color}`;
+  } else {
+    icon.style.backgroundColor = color;
+    icon.style.webkitMaskImage = `url("${iconSrc}")`;
+    icon.style.webkitMaskRepeat = "no-repeat";
+    icon.style.webkitMaskPosition = "center";
+    icon.style.webkitMaskSize = "contain";
+    icon.style.maskImage = `url("${iconSrc}")`;
+    icon.style.maskRepeat = "no-repeat";
+    icon.style.maskPosition = "center";
+    icon.style.maskSize = "contain";
+  }
+
+  preview.appendChild(icon);
+  document.body.appendChild(preview);
+  return preview;
+}
+
 export function MapExperience({ mode, initialCollection, initialAccess }: MapExperienceProps) {
   const shellRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLElement | null>(null);
@@ -123,6 +162,24 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
       setIsSigningIn(false);
     }
   }, [access.isSignedIn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const preloaders = MAPS.map((map) => {
+      const image = new window.Image();
+      image.src = map.imageSrc;
+      return image;
+    });
+
+    return () => {
+      for (const image of preloaders) {
+        image.src = "";
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -211,9 +268,9 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
 
   const renderedSize = baseSize * zoom;
   const markerScale = clampValue(
-    0.9 + ((zoom - MIN_ZOOM) / (FULL_MARKER_SCALE_ZOOM - MIN_ZOOM)) * 0.1,
-    0.9,
-    1,
+    1.1 + ((zoom - MIN_ZOOM) / (FULL_MARKER_SCALE_ZOOM - MIN_ZOOM)) * 0.1,
+    1.1,
+    1.2,
   );
   const defaultLeft = (viewport.width - renderedSize) / 2;
   const defaultTop = (viewport.height - renderedSize) / 2;
@@ -636,6 +693,17 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                       event.dataTransfer.setData("text/plain", definition.type);
                       event.dataTransfer.effectAllowed = "copy";
                       setSelectedToolType(definition.type);
+
+                      const preview = createDragPreview(
+                        definition.iconSrc,
+                        definition.color,
+                        definition.type === "key",
+                      );
+
+                      if (preview) {
+                        event.dataTransfer.setDragImage(preview, 17, 17);
+                        window.setTimeout(() => preview.remove(), 0);
+                      }
                     }}
                   >
                     {definition.type === "key" ? (
@@ -773,16 +841,18 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
               top: `${contentTop}px`,
             }}
           >
-            <Image
-              src={MAPS.find((map) => map.id === selectedMapId)?.imageSrc ?? MAPS[0].imageSrc}
-              alt=""
-              fill
-              unoptimized
-              sizes="100vw"
-              className="map-canvas__image"
-              draggable={false}
-              priority
-            />
+            {MAPS.map((map) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={map.id}
+                src={map.imageSrc}
+                alt=""
+                draggable={false}
+                loading="eager"
+                decoding="async"
+                className={`map-canvas__image ${map.id === selectedMapId ? "is-active" : ""}`}
+              />
+            ))}
             <div className="map-canvas__overlay" />
 
             {visibleMarkers.map((marker) => {
@@ -826,7 +896,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
             })}
           </div>
 
-          {isAdminPage && canEdit ? (
+          {isAdminPage && canEdit && editMode ? (
             <div className="viewport-controls">
               <button
                 type="button"
