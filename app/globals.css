@@ -387,6 +387,16 @@ img {
   border-width: 4px;
 }
 
+@media (max-width: 1920px) {
+  .map-marker {
+    width: clamp(21px, 1.55vw, 30px);
+  }
+
+  .ring-icon--map {
+    border-width: 3px;
+  }
+}
+
 .viewport-controls {
   position: absolute;
   inset: auto 18px 18px 18px;
