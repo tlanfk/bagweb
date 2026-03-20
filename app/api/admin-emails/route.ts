@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { isSuperAdminEmail, normalizeEmails } from "@/lib/admin-emails";
-import { loadMarkerCollection, saveMarkerCollection } from "@/lib/storage";
+import { loadMarkerCollection, saveAdminEmails } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,13 +18,10 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { adminEmails?: string[] };
     const collection = await loadMarkerCollection();
-    const nextCollection = {
-      ...collection,
-      updatedAt: new Date().toISOString(),
-      adminEmails: normalizeEmails(Array.isArray(body.adminEmails) ? body.adminEmails : []),
-    };
-
-    const saved = await saveMarkerCollection(nextCollection);
+    const saved = await saveAdminEmails(
+      collection,
+      normalizeEmails(Array.isArray(body.adminEmails) ? body.adminEmails : []),
+    );
     return NextResponse.json({ adminEmails: saved.adminEmails });
   } catch (error) {
     const message = error instanceof Error ? error.message : "권한 이메일 저장 중 오류가 발생했습니다.";

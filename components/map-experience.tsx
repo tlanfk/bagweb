@@ -1,13 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import type { CSSProperties, DragEvent, PointerEvent as ReactPointerEvent } from "react";
+import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { signIn, signOut } from "next-auth/react";
+import { MapMarkerLayer, type DisplayMarker } from "@/components/map-marker-layer";
+import { MapSidebar } from "@/components/map-sidebar";
 import type { AccessContext } from "@/lib/admin-access";
 import { MAPS, MAP_SIZE, MARKER_DEFINITIONS } from "@/lib/maps";
-import { clampCoordinate, cloneCollection, makeMarkerId, removeMarker, upsertMarker } from "@/lib/markers";
+import {
+  areMapGroupsEqual,
+  clampCoordinate,
+  cloneCollection,
+  makeMarkerId,
+  removeMarker,
+  upsertMarker,
+} from "@/lib/markers";
 import { MAP_IDS, MapId, MarkerCollection, MarkerType } from "@/lib/types";
 
 type ExperienceMode = "viewer" | "admin";
@@ -45,14 +53,6 @@ const FULL_MARKER_SCALE_ZOOM = 1.69;
 const DRAG_THRESHOLD = 5;
 const ICON_BACKGROUND_STORAGE_KEY = "bagweb-icon-background-enabled";
 const SELECTED_MAP_STORAGE_KEY = "bagweb-selected-map";
-const MARKER_Z_INDEX: Record<MarkerType, number> = {
-  car: 600,
-  boat: 500,
-  key: 400,
-  plane: 300,
-  garage: 200,
-  gas: 100,
-};
 
 function clampZoom(value: number): number {
   return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(value.toFixed(3))));
@@ -70,59 +70,7 @@ function getStoredMapId(value: string | null): MapId | null {
   return MAP_IDS.includes(value as MapId) ? (value as MapId) : null;
 }
 
-function iconStyle(iconSrc: string, color: string): CSSProperties {
-  return {
-    "--icon-url": `url("${iconSrc}")`,
-    "--icon-color": color,
-  } as CSSProperties;
-}
-
-function createDragPreview(iconSrc: string, color: string, isPin: boolean): HTMLDivElement | null {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const preview = document.createElement("div");
-  preview.style.width = "34px";
-  preview.style.height = "34px";
-  preview.style.pointerEvents = "none";
-  preview.style.display = "flex";
-  preview.style.alignItems = "center";
-  preview.style.justifyContent = "center";
-  preview.style.background = "transparent";
-
-  if (isPin) {
-    const icon = document.createElement("img");
-    icon.src = iconSrc;
-    icon.alt = "";
-    icon.style.display = "block";
-    icon.style.width = "34px";
-    icon.style.height = "34px";
-    icon.style.objectFit = "contain";
-    preview.appendChild(icon);
-  } else {
-    const icon = document.createElement("span");
-    icon.style.display = "block";
-    icon.style.width = "34px";
-    icon.style.height = "34px";
-    icon.style.backgroundColor = color;
-    icon.style.webkitMaskImage = `url("${iconSrc}")`;
-    icon.style.webkitMaskRepeat = "no-repeat";
-    icon.style.webkitMaskPosition = "center";
-    icon.style.webkitMaskSize = "contain";
-    icon.style.maskImage = `url("${iconSrc}")`;
-    icon.style.maskRepeat = "no-repeat";
-    icon.style.maskPosition = "center";
-    icon.style.maskSize = "contain";
-    preview.appendChild(icon);
-  }
-
-  document.body.appendChild(preview);
-  return preview;
-}
-
 export function MapExperience({ mode, initialCollection, initialAccess }: MapExperienceProps) {
-  const shellRef = useRef<HTMLDivElement | null>(null);
   const sidebarRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const suppressClickRef = useRef(false);
@@ -188,24 +136,6 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
       setIsSigningIn(false);
     }
   }, [access.isSignedIn]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const preloaders = MAPS.map((map) => {
-      const image = new window.Image();
-      image.src = map.imageSrc;
-      return image;
-    });
-
-    return () => {
-      for (const image of preloaders) {
-        image.src = "";
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -317,22 +247,33 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const contentTop = defaultTop + pan.y;
 
   const currentMapGroups = draftCollection.maps[selectedMapId];
-  const currentMarkers = useMemo(() => {
+  const currentMarkers = useMemo<DisplayMarker[]>(() => {
     return MARKER_DEFINITIONS.flatMap((definition) =>
       currentMapGroups[definition.type].map((marker) => ({
         ...marker,
         type: definition.type,
-        label: definition.label,
         iconSrc: definition.iconSrc,
         color: definition.color,
       })),
     );
   }, [currentMapGroups]);
-  const visibleMarkers = currentMarkers.filter((marker) => visibleTypes[marker.type]);
+  const visibleMarkers = useMemo(
+    () => currentMarkers.filter((marker) => visibleTypes[marker.type]),
+    [currentMarkers, visibleTypes],
+  );
+  const selectedMap = useMemo(
+    () => MAPS.find((map) => map.id === selectedMapId) ?? MAPS[0],
+    [selectedMapId],
+  );
 
-  const hasCurrentMapUnsavedChanges =
-    JSON.stringify(sourceCollection.maps[selectedMapId]) !== JSON.stringify(draftCollection.maps[selectedMapId]);
-  const hasUnsavedChanges = JSON.stringify(sourceCollection.maps) !== JSON.stringify(draftCollection.maps);
+  const hasCurrentMapUnsavedChanges = useMemo(
+    () => !areMapGroupsEqual(sourceCollection.maps[selectedMapId], draftCollection.maps[selectedMapId]),
+    [draftCollection.maps, selectedMapId, sourceCollection.maps],
+  );
+  const hasUnsavedChanges = useMemo(
+    () => MAP_IDS.some((mapId) => !areMapGroupsEqual(sourceCollection.maps[mapId], draftCollection.maps[mapId])),
+    [draftCollection.maps, sourceCollection.maps],
+  );
 
   function clampPan(nextPan: PanState, nextZoom: number): PanState {
     const nextRenderedSize = baseSize * nextZoom;
@@ -684,142 +625,30 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }
 
   return (
-    <div
-      ref={shellRef}
-      className={`app-shell ${isSidebarVisible ? "" : "is-sidebar-collapsed"}`}
-      onContextMenu={(event) => event.preventDefault()}
-    >
-      <aside ref={sidebarRef} className={`sidebar ${isSidebarVisible ? "" : "is-collapsed"}`}>
-        {isSidebarVisible ? (
-          <div className="sidebar-scroll">
-            <section className="sidebar-block">
-              <p className="eyebrow">MAP LIST</p>
-              <div className="map-list">
-                {MAPS.map((map) => (
-                  <button
-                    key={map.id}
-                    type="button"
-                    className={`map-item ${selectedMapId === map.id ? "is-active" : ""}`}
-                    onClick={() => setSelectedMapId(map.id)}
-                  >
-                    {map.name}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section className="sidebar-block sidebar-block--markers">
-              <div className="marker-list">
-                {MARKER_DEFINITIONS.map((definition) => (
-                  <button
-                    key={definition.type}
-                    type="button"
-                    draggable={editable}
-                    className={`marker-row ${visibleTypes[definition.type] ? "is-visible" : "is-hidden"} ${editable ? "is-draggable" : ""} ${editable && selectedToolType === definition.type ? "is-tool-selected" : ""}`}
-                    onClick={() => {
-                      setSelectedToolType(definition.type);
-                      setVisibleTypes((current) => ({
-                        ...current,
-                        [definition.type]: !current[definition.type],
-                      }));
-                    }}
-                    onDragStart={(event) => {
-                      if (!editable) {
-                        event.preventDefault();
-                        return;
-                      }
-
-                      event.dataTransfer.setData("text/plain", definition.type);
-                      event.dataTransfer.effectAllowed = "copy";
-                      setSelectedToolType(definition.type);
-
-                      const preview = createDragPreview(
-                        definition.iconSrc,
-                        definition.color,
-                        definition.type === "key",
-                      );
-
-                      if (preview) {
-                        event.dataTransfer.setDragImage(preview, 17, 17);
-                        window.setTimeout(() => preview.remove(), 0);
-                      }
-                    }}
-                  >
-                    {definition.type === "key" ? (
-                      <img src={definition.iconSrc} alt="" draggable={false} className="marker-image marker-image--sidebar" />
-                    ) : (
-                      <span className="icon-mask marker-row__icon" style={iconStyle(definition.iconSrc, definition.color)} />
-                    )}
-                    <span>{definition.label}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-            <section className="sidebar-block sidebar-block--controls">
-              <div className="sidebar-control-list">
-                {isAdminPage ? (
-                  access.isSignedIn ? (
-                    <>
-                      {canEdit ? (
-                        <button
-                          type="button"
-                          className={`action-button action-button--toggle ${editMode ? "is-active" : ""}`}
-                          onClick={handleEditToggle}
-                        >
-                          편집
-                        </button>
-                      ) : null}
-                      {isSuperAdmin ? (
-                        <button type="button" className="action-button" onClick={handleAdminEmailsEdit}>
-                          권한 이메일
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="action-button"
-                        onClick={() => signOut({ callbackUrl: "/" })}
-                      >
-                        로그아웃
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      className="action-button action-button--google"
-                      disabled={isSigningIn}
-                      onClick={handleGoogleLogin}
-                    >
-                      {isSigningIn ? "로그인 중" : "Google로 로그인"}
-                    </button>
-                  )
-                ) : access.isSignedIn ? (
-                  <Link href="/admin" className="action-button action-button--link">
-                    {canEdit ? "관리자 편집" : "관리자 화면"}
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="action-button action-button--google"
-                    disabled={isSigningIn}
-                    onClick={handleGoogleLogin}
-                  >
-                    {isSigningIn ? "로그인 중" : "관리자 로그인"}
-                  </button>
-                )}
-
-                <label className="action-button action-button--toggle-check">
-                  <input
-                    type="checkbox"
-                    checked={iconBackgroundEnabled}
-                    onChange={(event) => setIconBackgroundEnabled(event.target.checked)}
-                  />
-                  <span>아이콘 배경</span>
-                </label>
-              </div>
-            </section>
-          </div>
-        ) : null}
-      </aside>
+    <div className={`app-shell ${isSidebarVisible ? "" : "is-sidebar-collapsed"}`} onContextMenu={(event) => event.preventDefault()}>
+      <MapSidebar
+        access={access}
+        canEdit={canEdit}
+        editable={editable}
+        editMode={editMode}
+        iconBackgroundEnabled={iconBackgroundEnabled}
+        isAdminPage={isAdminPage}
+        isSidebarVisible={isSidebarVisible}
+        isSigningIn={isSigningIn}
+        isSuperAdmin={isSuperAdmin}
+        selectedMapId={selectedMapId}
+        selectedToolType={selectedToolType}
+        sidebarRef={sidebarRef}
+        visibleTypes={visibleTypes}
+        onAdminEmailsEdit={handleAdminEmailsEdit}
+        onEditToggle={handleEditToggle}
+        onGoogleLogin={handleGoogleLogin}
+        onIconBackgroundChange={setIconBackgroundEnabled}
+        onSelectMap={setSelectedMapId}
+        onSelectToolType={setSelectedToolType}
+        onSignOut={() => signOut({ callbackUrl: "/" })}
+        setVisibleTypes={setVisibleTypes}
+      />
 
       <button
         type="button"
@@ -877,57 +706,31 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
               top: `${contentTop}px`,
             }}
           >
-            {MAPS.map((map) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={map.id}
-                src={map.imageSrc}
-                alt=""
-                draggable={false}
-                loading="eager"
-                decoding="async"
-                className={`map-canvas__image ${map.id === selectedMapId ? "is-active" : ""}`}
-              />
-            ))}
+            {/* 선택한 맵만 렌더링해 초기 로딩과 메모리 점유를 줄입니다. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={selectedMap.id}
+              src={selectedMap.imageSrc}
+              alt=""
+              draggable={false}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="map-canvas__image is-active"
+            />
             <div className="map-canvas__overlay" />
 
-            {visibleMarkers.map((marker) => {
-              const markerKey = `${selectedMapId}:${marker.type}:${marker.id}`;
-              const isSelected = editable && selectedMarkerKey === markerKey;
-              const currentMarkerScale = marker.type === "key" ? markerScale * keyMarkerScaleFactor : markerScale;
-
-              return (
-                <button
-                  key={markerKey}
-                  type="button"
-                  data-marker="true"
-                  className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--pin" : ""} ${!iconBackgroundEnabled && marker.type !== "key" ? "is-bg-disabled" : ""}`}
-                  style={
-                    {
-                      left: `${(marker.x / MAP_SIZE) * 100}%`,
-                      top: `${(marker.y / MAP_SIZE) * 100}%`,
-                      borderColor: marker.color,
-                      "--marker-scale": currentMarkerScale,
-                      zIndex: isSelected ? 1000 : MARKER_Z_INDEX[marker.type],
-                    } as CSSProperties
-                  }
-                  onPointerDown={(event) => beginMarkerDrag(event, marker.type, marker.id)}
-                  onClick={(event) => {
-                    event.stopPropagation();
-
-                    if (editable) {
-                      setSelectedMarkerKey(markerKey);
-                    }
-                  }}
-                >
-                  {marker.type === "key" ? (
-                    <img src={marker.iconSrc} alt="" draggable={false} className="marker-image marker-image--map" />
-                  ) : (
-                    <span className="icon-mask map-marker__icon" style={iconStyle(marker.iconSrc, marker.color)} />
-                  )}
-                </button>
-              );
-            })}
+            <MapMarkerLayer
+              editable={editable}
+              iconBackgroundEnabled={iconBackgroundEnabled}
+              keyMarkerScaleFactor={keyMarkerScaleFactor}
+              markerScale={markerScale}
+              selectedMapId={selectedMapId}
+              selectedMarkerKey={selectedMarkerKey}
+              visibleMarkers={visibleMarkers}
+              onBeginMarkerDrag={beginMarkerDrag}
+              onSelectMarker={setSelectedMarkerKey}
+            />
           </div>
 
           {isAdminPage && canEdit && editMode ? (

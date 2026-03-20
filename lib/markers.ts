@@ -47,6 +47,10 @@ export function createEmptyCollection(): MarkerCollection {
 }
 
 export function cloneCollection(collection: MarkerCollection): MarkerCollection {
+  if (typeof globalThis.structuredClone === "function") {
+    return globalThis.structuredClone(collection);
+  }
+
   return JSON.parse(JSON.stringify(collection)) as MarkerCollection;
 }
 
@@ -107,6 +111,60 @@ function normalizeGroups(rawGroups: unknown): MapMarkerGroups {
   return groups;
 }
 
+export function normalizeMapGroups(input: unknown): MapMarkerGroups {
+  return normalizeGroups(input);
+}
+
+export function cloneGroups(groups: MapMarkerGroups): MapMarkerGroups {
+  return {
+    car: [...groups.car],
+    boat: [...groups.boat],
+    gas: [...groups.gas],
+    plane: [...groups.plane],
+    garage: [...groups.garage],
+    key: [...groups.key],
+  };
+}
+
+export function areMapGroupsEqual(left: MapMarkerGroups, right: MapMarkerGroups): boolean {
+  for (const type of MARKER_TYPES) {
+    const leftList = left[type];
+    const rightList = right[type];
+
+    if (leftList.length !== rightList.length) {
+      return false;
+    }
+
+    for (let index = 0; index < leftList.length; index += 1) {
+      const leftMarker = leftList[index];
+      const rightMarker = rightList[index];
+
+      if (
+        leftMarker?.id !== rightMarker?.id ||
+        leftMarker?.x !== rightMarker?.x ||
+        leftMarker?.y !== rightMarker?.y
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function cloneCollectionForMap(collection: MarkerCollection, mapId: MapId): MarkerCollection {
+  return {
+    ...collection,
+    mapUpdatedAt: {
+      ...collection.mapUpdatedAt,
+    },
+    maps: {
+      ...collection.maps,
+      [mapId]: cloneGroups(collection.maps[mapId]),
+    },
+  };
+}
+
 export function normalizeMarkerCollection(input: unknown): MarkerCollection {
   const base = createEmptyCollection();
 
@@ -146,7 +204,7 @@ export function upsertMarker(
   type: MarkerType,
   marker: MarkerPoint,
 ): MarkerCollection {
-  const next = cloneCollection(collection);
+  const next = cloneCollectionForMap(collection, mapId);
   const list = next.maps[mapId][type];
   const index = list.findIndex((item) => item.id === marker.id);
 
@@ -168,7 +226,7 @@ export function removeMarker(
   type: MarkerType,
   markerId: string,
 ): MarkerCollection {
-  const next = cloneCollection(collection);
+  const next = cloneCollectionForMap(collection, mapId);
   next.maps[mapId][type] = next.maps[mapId][type].filter((marker) => marker.id !== markerId);
   next.updatedAt = new Date().toISOString();
   next.mapUpdatedAt[mapId] = next.updatedAt;
@@ -180,7 +238,7 @@ export function replaceMapGroups(
   mapId: MapId,
   groups: MapMarkerGroups,
 ): MarkerCollection {
-  const next = cloneCollection(collection);
+  const next = cloneCollectionForMap(collection, mapId);
   next.maps[mapId] = normalizeGroups(groups);
   next.updatedAt = new Date().toISOString();
   next.mapUpdatedAt[mapId] = next.updatedAt;

@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { isAllowedAdminEmail } from "@/lib/admin-access";
-import { replaceMapGroups } from "@/lib/markers";
-import { loadMarkerCollection, saveMarkerCollection } from "@/lib/storage";
+import { loadMarkerCollection, saveMapGroups } from "@/lib/storage";
 import { MapId, MapMarkerGroups } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -43,8 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const nextCollection = replaceMapGroups(current, body.mapId, body.groups);
-    const saved = await saveMarkerCollection(nextCollection);
+    const saved = await saveMapGroups(current, body.mapId, body.groups);
     return NextResponse.json(saved);
   } catch (error) {
     const message = error instanceof Error ? error.message : "저장 중 오류가 발생했습니다.";
