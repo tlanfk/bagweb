@@ -8,7 +8,7 @@ import { signIn, signOut } from "next-auth/react";
 import type { AccessContext } from "@/lib/admin-access";
 import { MAPS, MAP_SIZE, MARKER_DEFINITIONS } from "@/lib/maps";
 import { clampCoordinate, cloneCollection, makeMarkerId, removeMarker, upsertMarker } from "@/lib/markers";
-import { MapId, MarkerCollection, MarkerType } from "@/lib/types";
+import { MAP_IDS, MapId, MarkerCollection, MarkerType } from "@/lib/types";
 
 type ExperienceMode = "viewer" | "admin";
 
@@ -44,6 +44,7 @@ const ZOOM_FACTOR = 1.2;
 const FULL_MARKER_SCALE_ZOOM = 1.69;
 const DRAG_THRESHOLD = 5;
 const ICON_BACKGROUND_STORAGE_KEY = "bagweb-icon-background-enabled";
+const SELECTED_MAP_STORAGE_KEY = "bagweb-selected-map";
 const MARKER_Z_INDEX: Record<MarkerType, number> = {
   car: 600,
   boat: 500,
@@ -59,6 +60,14 @@ function clampZoom(value: number): number {
 
 function clampValue(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function getStoredMapId(value: string | null): MapId | null {
+  if (!value) {
+    return null;
+  }
+
+  return MAP_IDS.includes(value as MapId) ? (value as MapId) : null;
 }
 
 function iconStyle(iconSrc: string, color: string): CSSProperties {
@@ -158,6 +167,18 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }, [initialAccess]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedMapId = getStoredMapId(window.localStorage.getItem(SELECTED_MAP_STORAGE_KEY));
+
+    if (storedMapId) {
+      setSelectedMapId(storedMapId);
+    }
+  }, []);
+
+  useEffect(() => {
     if (access.isSignedIn) {
       setIsSigningIn(false);
     }
@@ -205,6 +226,14 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
 
     window.localStorage.setItem(ICON_BACKGROUND_STORAGE_KEY, String(iconBackgroundEnabled));
   }, [iconBackgroundEnabled]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(SELECTED_MAP_STORAGE_KEY, selectedMapId);
+  }, [selectedMapId]);
 
   useEffect(() => {
     const viewportElement = viewportRef.current;

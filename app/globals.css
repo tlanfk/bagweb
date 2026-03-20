@@ -108,6 +108,7 @@ img {
   scroll-padding-bottom: 18px;
   scrollbar-width: thin;
   scrollbar-color: rgba(194, 138, 74, 0.72) rgba(26, 17, 12, 0.5);
+  justify-items: center;
 }
 
 .sidebar-scroll::-webkit-scrollbar {
@@ -134,6 +135,8 @@ img {
 
 .sidebar-block {
   padding: 18px;
+  width: 100%;
+  text-align: center;
 }
 
 .sidebar-block--markers {
@@ -156,13 +159,14 @@ img {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: center;
 }
 
 .map-list,
 .marker-list {
   display: grid;
   gap: 8px;
+  justify-items: center;
 }
 
 .map-item,
@@ -187,7 +191,7 @@ img {
   align-items: center;
   gap: 12px;
   width: 100%;
-  text-align: left;
+  text-align: center;
 }
 
 .map-item,
@@ -197,7 +201,8 @@ img {
 
 .marker-row {
   justify-content: flex-start;
-  padding: 0 12px;
+  padding: 0 16px;
+  text-align: left;
 }
 
 .marker-row--static {
@@ -209,7 +214,7 @@ img {
 }
 
 .map-item {
-  justify-content: flex-start;
+  justify-content: center;
   padding: 0 16px;
 }
 
