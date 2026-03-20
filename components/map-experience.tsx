@@ -17,6 +17,10 @@ import {
   upsertMarker,
 } from "@/lib/markers";
 import { MAP_IDS, MapId, MarkerCollection, MarkerType } from "@/lib/types";
+import {
+  ICON_BACKGROUND_COOKIE_KEY,
+  SELECTED_MAP_COOKIE_KEY,
+} from "@/lib/viewer-preference-keys";
 
 type ExperienceMode = "viewer" | "admin";
 
@@ -24,6 +28,8 @@ interface MapExperienceProps {
   mode: ExperienceMode;
   initialCollection: MarkerCollection;
   initialAccess: AccessContext;
+  initialSelectedMapId: MapId;
+  initialIconBackgroundEnabled: boolean;
 }
 
 interface ViewportMetrics {
@@ -70,7 +76,13 @@ function getStoredMapId(value: string | null): MapId | null {
   return MAP_IDS.includes(value as MapId) ? (value as MapId) : null;
 }
 
-export function MapExperience({ mode, initialCollection, initialAccess }: MapExperienceProps) {
+export function MapExperience({
+  mode,
+  initialCollection,
+  initialAccess,
+  initialSelectedMapId,
+  initialIconBackgroundEnabled,
+}: MapExperienceProps) {
   const sidebarRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const suppressClickRef = useRef(false);
@@ -78,7 +90,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
   const preloadedMapIdsRef = useRef<Set<MapId>>(new Set());
 
-  const [selectedMapId, setSelectedMapId] = useState<MapId>("erangel");
+  const [selectedMapId, setSelectedMapId] = useState<MapId>(initialSelectedMapId);
   const [selectedToolType, setSelectedToolType] = useState<MarkerType>("car");
   const [selectedMarkerKey, setSelectedMarkerKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
@@ -95,7 +107,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [access, setAccess] = useState<AccessContext>(initialAccess);
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [iconBackgroundEnabled, setIconBackgroundEnabled] = useState(true);
+  const [iconBackgroundEnabled, setIconBackgroundEnabled] = useState(initialIconBackgroundEnabled);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [loadedMapIds, setLoadedMapIds] = useState<MapId[]>(["erangel"]);
   const [visibleTypes, setVisibleTypes] = useState<Record<MarkerType, boolean>>({
@@ -120,18 +132,6 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   useEffect(() => {
     setAccess(initialAccess);
   }, [initialAccess]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const storedMapId = getStoredMapId(window.localStorage.getItem(SELECTED_MAP_STORAGE_KEY));
-
-    if (storedMapId) {
-      setSelectedMapId(storedMapId);
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -179,24 +179,8 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
       return;
     }
 
-    const saved = window.localStorage.getItem(ICON_BACKGROUND_STORAGE_KEY);
-
-    if (saved === "true") {
-      setIconBackgroundEnabled(true);
-      return;
-    }
-
-    if (saved === "false") {
-      setIconBackgroundEnabled(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     window.localStorage.setItem(ICON_BACKGROUND_STORAGE_KEY, String(iconBackgroundEnabled));
+    document.cookie = `${ICON_BACKGROUND_COOKIE_KEY}=${String(iconBackgroundEnabled)}; path=/; max-age=31536000; samesite=lax`;
   }, [iconBackgroundEnabled]);
 
   useEffect(() => {
@@ -205,6 +189,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
     }
 
     window.localStorage.setItem(SELECTED_MAP_STORAGE_KEY, selectedMapId);
+    document.cookie = `${SELECTED_MAP_COOKIE_KEY}=${selectedMapId}; path=/; max-age=31536000; samesite=lax`;
   }, [selectedMapId]);
 
   useEffect(() => {
