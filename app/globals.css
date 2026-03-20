@@ -276,17 +276,14 @@ img {
   mask-size: contain;
 }
 
-.ring-icon {
+.marker-image {
   display: inline-block;
-  border-radius: 999px;
-  border: 3px solid var(--icon-color);
-  background: transparent;
+  object-fit: contain;
 }
 
-.ring-icon--sidebar {
-  width: 18px;
-  height: 18px;
-  border-width: 3px;
+.marker-image--sidebar {
+  width: 22px;
+  height: 22px;
 }
 
 .action-button {
@@ -442,16 +439,18 @@ img {
   border-radius: 0;
 }
 
-.map-marker--ring {
+.map-marker--pin {
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: 0;
   box-shadow: none;
   padding: 0;
+  transform: translate(-50%, -100%) scale(var(--marker-scale, 1));
+  transform-origin: bottom center;
 }
 
-.map-marker--ring.is-selected {
-  box-shadow: 0 0 0 2px rgba(223, 178, 109, 0.92);
+.map-marker--pin.is-selected {
+  filter: drop-shadow(0 0 2px rgba(223, 178, 109, 0.95)) drop-shadow(0 0 14px rgba(160, 187, 82, 0.3));
 }
 
 .map-marker__icon {
@@ -459,19 +458,14 @@ img {
   height: 100%;
 }
 
-.ring-icon--map {
+.marker-image--map {
   width: 100%;
   height: 100%;
-  border-width: 4px;
 }
 
 @media (max-width: 1920px) {
   .map-marker {
     width: clamp(21px, 1.55vw, 30px);
-  }
-
-  .ring-icon--map {
-    border-width: 3px;
   }
 }
 

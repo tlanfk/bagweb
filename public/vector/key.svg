@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M16 5.5C16 8.53757 13.5376 11 10.5 11H7V13H5V15L4 16H0V12L5.16351 6.83649C5.0567 6.40863 5 5.96094 5 5.5C5 2.46243 7.46243 0 10.5 0C13.5376 0 16 2.46243 16 5.5ZM13 4C13 4.55228 12.5523 5 12 5C11.4477 5 11 4.55228 11 4C11 3.44772 11.4477 3 12 3C12.5523 3 13 3.44772 13 4Z" fill="#000000"/>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="50" cy="92" rx="15" ry="5" fill="black" fill-opacity="0.2"/>
+  <path d="M50 90C50 90 85 55.4545 85 35C85 15.67 69.33 0 50 0C30.67 0 15 15.67 15 35C15 55.4545 50 90 50 90Z" fill="#FF3131"/>
+  <circle cx="50" cy="35" r="13" fill="white"/>
+  <path d="M50 88.5C50 88.5 83.5 54.5 83.5 35C83.5 16.5 68.5 1.5 50 1.5C31.5 1.5 16.5 16.5 16.5 35C16.5 54.5 50 88.5 50 88.5Z" stroke="white" stroke-width="2" stroke-opacity="0.3"/>
 </svg>

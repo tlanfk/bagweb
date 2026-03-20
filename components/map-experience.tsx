@@ -77,7 +77,7 @@ function iconStyle(iconSrc: string, color: string): CSSProperties {
   } as CSSProperties;
 }
 
-function createDragPreview(iconSrc: string, color: string, isRing: boolean): HTMLDivElement | null {
+function createDragPreview(iconSrc: string, color: string, isPin: boolean): HTMLDivElement | null {
   if (typeof document === "undefined") {
     return null;
   }
@@ -91,15 +91,20 @@ function createDragPreview(iconSrc: string, color: string, isRing: boolean): HTM
   preview.style.justifyContent = "center";
   preview.style.background = "transparent";
 
-  const icon = document.createElement("span");
-  icon.style.display = "block";
-  icon.style.width = "34px";
-  icon.style.height = "34px";
-
-  if (isRing) {
-    icon.style.borderRadius = "999px";
-    icon.style.border = `4px solid ${color}`;
+  if (isPin) {
+    const icon = document.createElement("img");
+    icon.src = iconSrc;
+    icon.alt = "";
+    icon.style.display = "block";
+    icon.style.width = "34px";
+    icon.style.height = "34px";
+    icon.style.objectFit = "contain";
+    preview.appendChild(icon);
   } else {
+    const icon = document.createElement("span");
+    icon.style.display = "block";
+    icon.style.width = "34px";
+    icon.style.height = "34px";
     icon.style.backgroundColor = color;
     icon.style.webkitMaskImage = `url("${iconSrc}")`;
     icon.style.webkitMaskRepeat = "no-repeat";
@@ -109,9 +114,9 @@ function createDragPreview(iconSrc: string, color: string, isRing: boolean): HTM
     icon.style.maskRepeat = "no-repeat";
     icon.style.maskPosition = "center";
     icon.style.maskSize = "contain";
+    preview.appendChild(icon);
   }
 
-  preview.appendChild(icon);
   document.body.appendChild(preview);
   return preview;
 }
@@ -297,9 +302,14 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
 
   const renderedSize = baseSize * zoom;
   const markerScale = clampValue(
-    1.1 + ((zoom - MIN_ZOOM) / (FULL_MARKER_SCALE_ZOOM - MIN_ZOOM)) * 0.1,
-    1.1,
+    1 + ((zoom - MIN_ZOOM) / (FULL_MARKER_SCALE_ZOOM - MIN_ZOOM)) * 0.2,
+    1,
     1.2,
+  );
+  const keyMarkerScaleFactor = clampValue(
+    0.7 + ((zoom - MIN_ZOOM) / (FULL_MARKER_SCALE_ZOOM - MIN_ZOOM)) * 0.3,
+    0.7,
+    1,
   );
   const defaultLeft = (viewport.width - renderedSize) / 2;
   const defaultTop = (viewport.height - renderedSize) / 2;
@@ -736,10 +746,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                     }}
                   >
                     {definition.type === "key" ? (
-                      <span
-                        className="ring-icon marker-row__icon ring-icon--sidebar"
-                        style={{ "--icon-color": definition.color } as CSSProperties}
-                      />
+                      <img src={definition.iconSrc} alt="" draggable={false} className="marker-image marker-image--sidebar" />
                     ) : (
                       <span className="icon-mask marker-row__icon" style={iconStyle(definition.iconSrc, definition.color)} />
                     )}
@@ -887,19 +894,20 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
             {visibleMarkers.map((marker) => {
               const markerKey = `${selectedMapId}:${marker.type}:${marker.id}`;
               const isSelected = editable && selectedMarkerKey === markerKey;
+              const currentMarkerScale = marker.type === "key" ? markerScale * keyMarkerScaleFactor : markerScale;
 
               return (
                 <button
                   key={markerKey}
                   type="button"
                   data-marker="true"
-                  className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--ring" : ""} ${!iconBackgroundEnabled && marker.type !== "key" ? "is-bg-disabled" : ""}`}
+                  className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--pin" : ""} ${!iconBackgroundEnabled && marker.type !== "key" ? "is-bg-disabled" : ""}`}
                   style={
                     {
                       left: `${(marker.x / MAP_SIZE) * 100}%`,
                       top: `${(marker.y / MAP_SIZE) * 100}%`,
                       borderColor: marker.color,
-                      "--marker-scale": markerScale,
+                      "--marker-scale": currentMarkerScale,
                       zIndex: isSelected ? 1000 : MARKER_Z_INDEX[marker.type],
                     } as CSSProperties
                   }
@@ -913,10 +921,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
                   }}
                 >
                   {marker.type === "key" ? (
-                    <span
-                      className="ring-icon map-marker__icon ring-icon--map"
-                      style={{ "--icon-color": marker.color } as CSSProperties}
-                    />
+                    <img src={marker.iconSrc} alt="" draggable={false} className="marker-image marker-image--map" />
                   ) : (
                     <span className="icon-mask map-marker__icon" style={iconStyle(marker.iconSrc, marker.color)} />
                   )}
