@@ -76,6 +76,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const suppressClickRef = useRef(false);
   const interactionRef = useRef<DragInteraction | null>(null);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const preloadedMapIdsRef = useRef<Set<MapId>>(new Set());
 
   const [selectedMapId, setSelectedMapId] = useState<MapId>("erangel");
   const [selectedToolType, setSelectedToolType] = useState<MarkerType>("car");
@@ -96,6 +97,7 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [iconBackgroundEnabled, setIconBackgroundEnabled] = useState(true);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [loadedMapIds, setLoadedMapIds] = useState<MapId[]>(["erangel"]);
   const [visibleTypes, setVisibleTypes] = useState<Record<MarkerType, boolean>>({
     car: true,
     boat: true,
@@ -132,10 +134,45 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     if (access.isSignedIn) {
       setIsSigningIn(false);
     }
   }, [access.isSignedIn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const preloaders = MAPS.map((map) => {
+      if (preloadedMapIdsRef.current.has(map.id)) {
+        return null;
+      }
+
+      preloadedMapIdsRef.current.add(map.id);
+      const image = new window.Image();
+      image.decoding = "async";
+      image.src = map.imageSrc;
+      image.onload = () => {
+        setLoadedMapIds((current) => (current.includes(map.id) ? current : [...current, map.id]));
+      };
+      return image;
+    });
+
+    return () => {
+      for (const image of preloaders) {
+        if (!image) {
+          continue;
+        }
+
+        image.onload = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -265,6 +302,8 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
     () => MAPS.find((map) => map.id === selectedMapId) ?? MAPS[0],
     [selectedMapId],
   );
+  const renderedMaps = MAPS;
+  const isSelectedMapLoaded = loadedMapIds.includes(selectedMapId);
 
   const hasCurrentMapUnsavedChanges = useMemo(
     () => !areMapGroupsEqual(sourceCollection.maps[selectedMapId], draftCollection.maps[selectedMapId]),
@@ -624,6 +663,10 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
     void signIn("google", { callbackUrl: "/admin" });
   }
 
+  function handleMapImageLoad(mapId: MapId) {
+    setLoadedMapIds((current) => (current.includes(mapId) ? current : [...current, mapId]));
+  }
+
   return (
     <div className={`app-shell ${isSidebarVisible ? "" : "is-sidebar-collapsed"}`} onContextMenu={(event) => event.preventDefault()}>
       <MapSidebar
@@ -706,31 +749,35 @@ export function MapExperience({ mode, initialCollection, initialAccess }: MapExp
               top: `${contentTop}px`,
             }}
           >
-            {/* 선택한 맵만 렌더링해 초기 로딩과 메모리 점유를 줄입니다. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              key={selectedMap.id}
-              src={selectedMap.imageSrc}
-              alt=""
-              draggable={false}
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-              className="map-canvas__image is-active"
-            />
-            <div className="map-canvas__overlay" />
+            {renderedMaps.map((map) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={map.id}
+                src={map.imageSrc}
+                alt=""
+                draggable={false}
+                loading={map.id === selectedMap.id ? "eager" : "lazy"}
+                fetchPriority={map.id === selectedMap.id ? "high" : "low"}
+                decoding="async"
+                className={`map-canvas__image ${map.id === selectedMapId ? "is-active" : ""}`}
+                onLoad={() => handleMapImageLoad(map.id)}
+              />
+            ))}
+            {isSelectedMapLoaded ? <div className="map-canvas__overlay" /> : null}
 
-            <MapMarkerLayer
-              editable={editable}
-              iconBackgroundEnabled={iconBackgroundEnabled}
-              keyMarkerScaleFactor={keyMarkerScaleFactor}
-              markerScale={markerScale}
-              selectedMapId={selectedMapId}
-              selectedMarkerKey={selectedMarkerKey}
-              visibleMarkers={visibleMarkers}
-              onBeginMarkerDrag={beginMarkerDrag}
-              onSelectMarker={setSelectedMarkerKey}
-            />
+            {isSelectedMapLoaded ? (
+              <MapMarkerLayer
+                editable={editable}
+                iconBackgroundEnabled={iconBackgroundEnabled}
+                keyMarkerScaleFactor={keyMarkerScaleFactor}
+                markerScale={markerScale}
+                selectedMapId={selectedMapId}
+                selectedMarkerKey={selectedMarkerKey}
+                visibleMarkers={visibleMarkers}
+                onBeginMarkerDrag={beginMarkerDrag}
+                onSelectMarker={setSelectedMarkerKey}
+              />
+            ) : null}
           </div>
 
           {isAdminPage && canEdit && editMode ? (
