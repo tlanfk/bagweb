@@ -105,11 +105,16 @@ async function loadSplitBlob(): Promise<MarkerCollection | null> {
   }
 
   const metadata = normalizeMetadata(rawMetadata);
+  const legacy = await loadLegacyBlob();
   const mapEntries = await Promise.all(
-    MAP_IDS.map(async (mapId): Promise<[MapId, MapMarkerGroups]> => [
-      mapId,
-      normalizeMapGroups(await loadBlobJson(getMapBlobPathname(mapId))),
-    ]),
+    MAP_IDS.map(async (mapId): Promise<[MapId, MapMarkerGroups]> => {
+      const splitGroups = await loadBlobJson(getMapBlobPathname(mapId));
+
+      return [
+        mapId,
+        splitGroups ? normalizeMapGroups(splitGroups) : legacy?.maps[mapId] ?? normalizeMapGroups(null),
+      ];
+    }),
   );
 
   const maps = Object.fromEntries(mapEntries) as MarkerCollection["maps"];

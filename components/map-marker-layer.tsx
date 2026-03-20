@@ -53,13 +53,15 @@ export function MapMarkerLayer({
         const markerKey = `${selectedMapId}:${marker.type}:${marker.id}`;
         const isSelected = editable && selectedMarkerKey === markerKey;
         const currentMarkerScale = marker.type === "key" ? markerScale * keyMarkerScaleFactor : markerScale;
+        const shouldHideBackground =
+          marker.type === "boat" || (!iconBackgroundEnabled && marker.type !== "key");
 
         return (
           <button
             key={markerKey}
             type="button"
             data-marker="true"
-            className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--pin" : ""} ${!iconBackgroundEnabled && marker.type !== "key" ? "is-bg-disabled" : ""}`}
+            className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--pin" : ""} ${shouldHideBackground ? "is-bg-disabled" : ""}`}
             style={
               {
                 left: `${(marker.x / MAP_SIZE) * 100}%`,
