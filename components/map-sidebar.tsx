@@ -46,7 +46,12 @@ function handleMarkerDragStart(
   event.dataTransfer.effectAllowed = "copy";
   onSelectToolType(definition.type);
 
-  const preview = createDragPreview(definition.iconSrc, definition.color, definition.type === "key");
+  const preview = createDragPreview(
+    definition.iconSrc,
+    definition.color,
+    definition.type,
+    definition.type === "key",
+  );
 
   if (preview) {
     event.dataTransfer.setDragImage(preview, 17, 17);
@@ -118,6 +123,7 @@ export function MapSidebar({
                     iconSrc={definition.iconSrc}
                     color={definition.color}
                     isPin={definition.type === "key"}
+                    markerType={definition.type}
                     variant="sidebar"
                   />
                   <span>{definition.label}</span>

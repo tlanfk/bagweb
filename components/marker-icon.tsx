@@ -1,11 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import type { MarkerType } from "@/lib/types";
 
 interface MarkerIconProps {
   iconSrc: string;
   color: string;
   isPin: boolean;
+  markerType: MarkerType;
   variant: "sidebar" | "map";
 }
 
@@ -16,7 +18,16 @@ export function iconStyle(iconSrc: string, color: string): CSSProperties {
   } as CSSProperties;
 }
 
-export function createDragPreview(iconSrc: string, color: string, isPin: boolean): HTMLDivElement | null {
+function shouldRenderAsImage(markerType: MarkerType, isPin: boolean) {
+  return isPin || markerType === "gas";
+}
+
+export function createDragPreview(
+  iconSrc: string,
+  color: string,
+  markerType: MarkerType,
+  isPin: boolean,
+): HTMLDivElement | null {
   if (typeof document === "undefined") {
     return null;
   }
@@ -30,7 +41,7 @@ export function createDragPreview(iconSrc: string, color: string, isPin: boolean
   preview.style.justifyContent = "center";
   preview.style.background = "transparent";
 
-  if (isPin) {
+  if (shouldRenderAsImage(markerType, isPin)) {
     const icon = document.createElement("img");
     icon.src = iconSrc;
     icon.alt = "";
@@ -60,8 +71,8 @@ export function createDragPreview(iconSrc: string, color: string, isPin: boolean
   return preview;
 }
 
-export function MarkerIcon({ iconSrc, color, isPin, variant }: MarkerIconProps) {
-  if (isPin) {
+export function MarkerIcon({ iconSrc, color, isPin, markerType, variant }: MarkerIconProps) {
+  if (shouldRenderAsImage(markerType, isPin)) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img

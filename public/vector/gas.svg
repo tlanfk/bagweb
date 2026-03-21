@@ -1,12 +1,30 @@
 <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<!-- 주유기 본체 (세련된 각진 형태) -->
-<path d="M30 15 H60 L70 25 V90 H30 V15 Z" fill="black"/>
-<!-- 디지털 화면창 -->
-<rect x="38" y="28" width="24" height="20" rx="1" fill="white" fill-opacity="0.2"/>
-<!-- 주유 호스 -->
-<path d="M70 40 Q85 40 85 60 V80" stroke="black" stroke-width="5" fill="none" stroke-linecap="round"/>
-<!-- 하단 버튼 디테일 -->
-<circle cx="40" cy="55" r="2" fill="white" fill-opacity="0.5"/>
-<circle cx="50" cy="55" r="2" fill="white" fill-opacity="0.5"/>
-<circle cx="60" cy="55" r="2" fill="white" fill-opacity="0.5"/>
+<path
+  d="M34 14H57L68 24V78C68 83.5228 63.5228 88 58 88H34C28.4772 88 24 83.5228 24 78V24C24 18.4772 28.4772 14 34 14Z"
+  fill="#FF62B6"
+  stroke="#121212"
+  stroke-width="5"
+  stroke-linejoin="round"
+/>
+<rect
+  x="37"
+  y="29"
+  width="18"
+  height="14"
+  rx="2"
+  fill="#FFD7EC"
+  stroke="#121212"
+  stroke-width="4"
+/>
+<path
+  d="M68 33H75C79.4183 33 83 36.5817 83 41V57C83 61.4183 79.4183 65 75 65H73V73C73 81.2843 66.2843 88 58 88"
+  stroke="#121212"
+  stroke-width="5"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+/>
+<path d="M35 56H57" stroke="#121212" stroke-width="4" stroke-linecap="round"/>
+<circle cx="41" cy="64" r="2.5" fill="#121212"/>
+<circle cx="50" cy="64" r="2.5" fill="#121212"/>
+<circle cx="59" cy="64" r="2.5" fill="#121212"/>
 </svg>
