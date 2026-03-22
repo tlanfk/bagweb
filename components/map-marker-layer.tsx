@@ -55,6 +55,8 @@ export function MapMarkerLayer({
         const currentMarkerScale =
           marker.type === "key"
             ? markerScale * keyMarkerScaleFactor
+            : marker.type === "car"
+              ? markerScale * 1.2
             : marker.type === "gas"
               ? markerScale * 1.1
               : markerScale;

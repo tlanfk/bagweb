@@ -19,7 +19,7 @@ export function iconStyle(iconSrc: string, color: string): CSSProperties {
 }
 
 function shouldRenderAsImage(markerType: MarkerType, isPin: boolean) {
-  return isPin || markerType === "gas";
+  return isPin || markerType === "car" || markerType === "gas";
 }
 
 export function createDragPreview(

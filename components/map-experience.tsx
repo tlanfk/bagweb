@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { signIn, signOut } from "next-auth/react";
 import { MapMarkerLayer, type DisplayMarker } from "@/components/map-marker-layer";
 import { MapSidebar } from "@/components/map-sidebar";
@@ -192,12 +192,28 @@ export function MapExperience({
     document.cookie = `${SELECTED_MAP_COOKIE_KEY}=${selectedMapId}; path=/; max-age=31536000; samesite=lax`;
   }, [selectedMapId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const viewportElement = viewportRef.current;
 
     if (!viewportElement) {
       return;
     }
+
+    const syncViewport = () => {
+      const nextWidth = viewportElement.clientWidth;
+      const nextHeight = viewportElement.clientHeight;
+
+      setViewport((current) => {
+        if (current.width === nextWidth && current.height === nextHeight) {
+          return current;
+        }
+
+        return {
+          width: nextWidth,
+          height: nextHeight,
+        };
+      });
+    };
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -206,12 +222,22 @@ export function MapExperience({
         return;
       }
 
-      setViewport({
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
+      const nextWidth = entry.contentRect.width;
+      const nextHeight = entry.contentRect.height;
+
+      setViewport((current) => {
+        if (current.width === nextWidth && current.height === nextHeight) {
+          return current;
+        }
+
+        return {
+          width: nextWidth,
+          height: nextHeight,
+        };
       });
     });
 
+    syncViewport();
     observer.observe(viewportElement);
 
     return () => observer.disconnect();
@@ -289,6 +315,7 @@ export function MapExperience({
   );
   const renderedMaps = MAPS;
   const isSelectedMapLoaded = loadedMapIds.includes(selectedMapId);
+  const isViewportReady = viewport.width > 0 && viewport.height > 0;
 
   const hasCurrentMapUnsavedChanges = useMemo(
     () => !areMapGroupsEqual(sourceCollection.maps[selectedMapId], draftCollection.maps[selectedMapId]),
@@ -726,7 +753,7 @@ export function MapExperience({
           }}
         >
           <div
-            className={`map-canvas ${editable ? "is-editable" : ""}`}
+            className={`map-canvas ${editable ? "is-editable" : ""} ${isViewportReady ? "is-ready" : "is-pending"}`}
             style={{
               width: `${renderedSize}px`,
               height: `${renderedSize}px`,
@@ -734,23 +761,25 @@ export function MapExperience({
               top: `${contentTop}px`,
             }}
           >
-            {renderedMaps.map((map) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={map.id}
-                src={map.imageSrc}
-                alt=""
-                draggable={false}
-                loading={map.id === selectedMap.id ? "eager" : "lazy"}
-                fetchPriority={map.id === selectedMap.id ? "high" : "low"}
-                decoding="async"
-                className={`map-canvas__image ${map.id === selectedMapId ? "is-active" : ""}`}
-                onLoad={() => handleMapImageLoad(map.id)}
-              />
-            ))}
-            {isSelectedMapLoaded ? <div className="map-canvas__overlay" /> : null}
+            {isViewportReady
+              ? renderedMaps.map((map) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={map.id}
+                    src={map.imageSrc}
+                    alt=""
+                    draggable={false}
+                    loading={map.id === selectedMap.id ? "eager" : "lazy"}
+                    fetchPriority={map.id === selectedMap.id ? "high" : "low"}
+                    decoding="async"
+                    className={`map-canvas__image ${map.id === selectedMapId ? "is-active" : ""}`}
+                    onLoad={() => handleMapImageLoad(map.id)}
+                  />
+                ))
+              : null}
+            {isViewportReady && isSelectedMapLoaded ? <div className="map-canvas__overlay" /> : null}
 
-            {isSelectedMapLoaded ? (
+            {isViewportReady && isSelectedMapLoaded ? (
               <MapMarkerLayer
                 editable={editable}
                 iconBackgroundEnabled={iconBackgroundEnabled}
