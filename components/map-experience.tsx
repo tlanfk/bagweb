@@ -68,14 +68,6 @@ function clampValue(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function getStoredMapId(value: string | null): MapId | null {
-  if (!value) {
-    return null;
-  }
-
-  return MAP_IDS.includes(value as MapId) ? (value as MapId) : null;
-}
-
 export function MapExperience({
   mode,
   initialCollection,
@@ -88,7 +80,6 @@ export function MapExperience({
   const suppressClickRef = useRef(false);
   const interactionRef = useRef<DragInteraction | null>(null);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
-  const preloadedMapIdsRef = useRef<Set<MapId>>(new Set());
 
   const [selectedMapId, setSelectedMapId] = useState<MapId>(initialSelectedMapId);
   const [selectedToolType, setSelectedToolType] = useState<MarkerType>("car");
@@ -109,7 +100,7 @@ export function MapExperience({
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [iconBackgroundEnabled, setIconBackgroundEnabled] = useState(initialIconBackgroundEnabled);
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [loadedMapIds, setLoadedMapIds] = useState<MapId[]>(["erangel"]);
+  const [loadedMapIds, setLoadedMapIds] = useState<MapId[]>([]);
   const [visibleTypes, setVisibleTypes] = useState<Record<MarkerType, boolean>>({
     car: true,
     boat: true,
@@ -142,37 +133,6 @@ export function MapExperience({
       setIsSigningIn(false);
     }
   }, [access.isSignedIn]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const preloaders = MAPS.map((map) => {
-      if (preloadedMapIdsRef.current.has(map.id)) {
-        return null;
-      }
-
-      preloadedMapIdsRef.current.add(map.id);
-      const image = new window.Image();
-      image.decoding = "async";
-      image.src = map.imageSrc;
-      image.onload = () => {
-        setLoadedMapIds((current) => (current.includes(map.id) ? current : [...current, map.id]));
-      };
-      return image;
-    });
-
-    return () => {
-      for (const image of preloaders) {
-        if (!image) {
-          continue;
-        }
-
-        image.onload = null;
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -313,7 +273,6 @@ export function MapExperience({
     () => MAPS.find((map) => map.id === selectedMapId) ?? MAPS[0],
     [selectedMapId],
   );
-  const renderedMaps = MAPS;
   const isSelectedMapLoaded = loadedMapIds.includes(selectedMapId);
   const isViewportReady = viewport.width > 0 && viewport.height > 0;
 
@@ -752,47 +711,45 @@ export function MapExperience({
             addMarkerAt(event.clientX, event.clientY, droppedType);
           }}
         >
-          <div
-            className={`map-canvas ${editable ? "is-editable" : ""} ${isViewportReady ? "is-ready" : "is-pending"}`}
-            style={{
-              width: `${renderedSize}px`,
-              height: `${renderedSize}px`,
-              left: `${contentLeft}px`,
-              top: `${contentTop}px`,
-            }}
-          >
-            {isViewportReady
-              ? renderedMaps.map((map) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={map.id}
-                    src={map.imageSrc}
-                    alt=""
-                    draggable={false}
-                    loading={map.id === selectedMap.id ? "eager" : "lazy"}
-                    fetchPriority={map.id === selectedMap.id ? "high" : "low"}
-                    decoding="async"
-                    className={`map-canvas__image ${map.id === selectedMapId ? "is-active" : ""}`}
-                    onLoad={() => handleMapImageLoad(map.id)}
-                  />
-                ))
-              : null}
-            {isViewportReady && isSelectedMapLoaded ? <div className="map-canvas__overlay" /> : null}
-
-            {isViewportReady && isSelectedMapLoaded ? (
-              <MapMarkerLayer
-                editable={editable}
-                iconBackgroundEnabled={iconBackgroundEnabled}
-                keyMarkerScaleFactor={keyMarkerScaleFactor}
-                markerScale={markerScale}
-                selectedMapId={selectedMapId}
-                selectedMarkerKey={selectedMarkerKey}
-                visibleMarkers={visibleMarkers}
-                onBeginMarkerDrag={beginMarkerDrag}
-                onSelectMarker={setSelectedMarkerKey}
+          {isViewportReady ? (
+            <div
+              className={`map-canvas ${editable ? "is-editable" : ""} is-ready`}
+              style={{
+                width: `${renderedSize}px`,
+                height: `${renderedSize}px`,
+                left: `${contentLeft}px`,
+                top: `${contentTop}px`,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={selectedMap.id}
+                src={selectedMap.imageSrc}
+                alt=""
+                draggable={false}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                className={`map-canvas__image ${isSelectedMapLoaded ? "is-active" : ""}`}
+                onLoad={() => handleMapImageLoad(selectedMap.id)}
               />
-            ) : null}
-          </div>
+              {isSelectedMapLoaded ? <div className="map-canvas__overlay" /> : null}
+
+              {isSelectedMapLoaded ? (
+                <MapMarkerLayer
+                  editable={editable}
+                  iconBackgroundEnabled={iconBackgroundEnabled}
+                  keyMarkerScaleFactor={keyMarkerScaleFactor}
+                  markerScale={markerScale}
+                  selectedMapId={selectedMapId}
+                  selectedMarkerKey={selectedMarkerKey}
+                  visibleMarkers={visibleMarkers}
+                  onBeginMarkerDrag={beginMarkerDrag}
+                  onSelectMarker={setSelectedMarkerKey}
+                />
+              ) : null}
+            </div>
+          ) : null}
 
           {isAdminPage && canEdit && editMode ? (
             <div className="viewport-controls">

@@ -68,12 +68,11 @@ export function MapMarkerLayer({
             key={markerKey}
             type="button"
             data-marker="true"
-            className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "key" ? "map-marker--pin" : ""} ${marker.type === "gas" ? "map-marker--gas" : ""} ${shouldHideBackground ? "is-bg-disabled" : ""}`}
+            className={`map-marker ${isSelected ? "is-selected" : ""} ${marker.type === "car" ? "map-marker--car" : ""} ${marker.type === "key" ? "map-marker--pin" : ""} ${marker.type === "gas" ? "map-marker--gas" : ""} ${shouldHideBackground ? "is-bg-disabled" : ""}`}
             style={
               {
                 left: `${(marker.x / MAP_SIZE) * 100}%`,
                 top: `${(marker.y / MAP_SIZE) * 100}%`,
-                borderColor: marker.color,
                 "--marker-scale": currentMarkerScale,
                 zIndex: isSelected ? 1000 : MARKER_Z_INDEX[marker.type],
               } as CSSProperties

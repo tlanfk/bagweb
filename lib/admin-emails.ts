@@ -23,12 +23,16 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   return (email ?? "").trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 }
 
-export async function getAllowedAdminEmails(): Promise<string[]> {
-  const collection = await loadMarkerCollection();
+export function getMergedAdminEmails(persistedAdminEmails: string[]): string[] {
   return normalizeEmails([
-    ...collection.adminEmails,
+    ...persistedAdminEmails,
     ...parseBootstrapEmails(process.env.ADMIN_GOOGLE_EMAILS),
   ]);
+}
+
+export async function getAllowedAdminEmails(): Promise<string[]> {
+  const collection = await loadMarkerCollection();
+  return getMergedAdminEmails(collection.adminEmails);
 }
 
 export async function isAllowedAdminEmail(email?: string | null): Promise<boolean> {

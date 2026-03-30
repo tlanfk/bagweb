@@ -105,19 +105,20 @@ async function loadSplitBlob(): Promise<MarkerCollection | null> {
   }
 
   const metadata = normalizeMetadata(rawMetadata);
-  const legacy = await loadLegacyBlob();
   const mapEntries = await Promise.all(
-    MAP_IDS.map(async (mapId): Promise<[MapId, MapMarkerGroups]> => {
-      const splitGroups = await loadBlobJson(getMapBlobPathname(mapId));
-
-      return [
-        mapId,
-        splitGroups ? normalizeMapGroups(splitGroups) : legacy?.maps[mapId] ?? normalizeMapGroups(null),
-      ];
+    MAP_IDS.map(async (mapId): Promise<[MapId, unknown | null]> => {
+      const splitGroups = await loadBlobJson<unknown>(getMapBlobPathname(mapId));
+      return [mapId, splitGroups];
     }),
   );
-
-  const maps = Object.fromEntries(mapEntries) as MarkerCollection["maps"];
+  const hasMissingSplitMaps = mapEntries.some(([, splitGroups]) => splitGroups === null);
+  const legacy = hasMissingSplitMaps ? await loadLegacyBlob() : null;
+  const maps = Object.fromEntries(
+    mapEntries.map(([mapId, splitGroups]) => [
+      mapId,
+      splitGroups ? normalizeMapGroups(splitGroups) : legacy?.maps[mapId] ?? normalizeMapGroups(null),
+    ]),
+  ) as MarkerCollection["maps"];
 
   return normalizeMarkerCollection({
     ...metadata,

@@ -1,16 +1,17 @@
 import { MapExperience } from "@/components/map-experience";
-import { getServerAccessContext } from "@/lib/admin-access";
+import { buildAccessContext, getSessionEmail } from "@/lib/admin-access";
 import { loadMarkerCollection } from "@/lib/storage";
 import { getViewerPreferences } from "@/lib/viewer-preferences";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const [collection, access, preferences] = await Promise.all([
+  const [collection, preferences, email] = await Promise.all([
     loadMarkerCollection(),
-    getServerAccessContext(),
     getViewerPreferences(),
+    getSessionEmail(),
   ]);
+  const access = buildAccessContext(email, collection.adminEmails);
 
   return (
     <MapExperience

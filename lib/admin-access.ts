@@ -1,6 +1,11 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { getAllowedAdminEmails, isAllowedAdminEmail, isSuperAdminEmail } from "@/lib/admin-emails";
+import type { MarkerCollection } from "@/lib/types";
+import {
+  getAllowedAdminEmails,
+  getMergedAdminEmails,
+  isSuperAdminEmail,
+} from "@/lib/admin-emails";
 
 export { isAllowedAdminEmail } from "@/lib/admin-emails";
 
@@ -12,26 +17,57 @@ export interface AccessContext {
   adminEmails: string[];
 }
 
-export async function getServerAccessContext(): Promise<AccessContext> {
+function normalizeEmail(email?: string | null): string | null {
+  return email?.trim().toLowerCase() ?? null;
+}
+
+export function buildAccessContext(
+  email: string | null,
+  persistedAdminEmails: MarkerCollection["adminEmails"],
+): AccessContext {
+  const normalizedEmail = normalizeEmail(email);
+  const adminEmails = getMergedAdminEmails(persistedAdminEmails);
+  const isSuperAdmin = isSuperAdminEmail(normalizedEmail);
+
+  return {
+    email: normalizedEmail,
+    isSignedIn: Boolean(normalizedEmail),
+    canEdit: isSuperAdmin || (normalizedEmail ? adminEmails.includes(normalizedEmail) : false),
+    isSuperAdmin,
+    adminEmails,
+  };
+}
+
+export async function getSessionEmail(): Promise<string | null> {
   try {
     const session = await getServerSession(authOptions);
-    const email = session?.user?.email?.trim().toLowerCase() ?? null;
+    return normalizeEmail(session?.user?.email);
+  } catch {
+    return null;
+  }
+}
+
+export async function getServerAccessContext(
+  collection?: Pick<MarkerCollection, "adminEmails">,
+): Promise<AccessContext> {
+  try {
+    const email = await getSessionEmail();
+
+    if (collection) {
+      return buildAccessContext(email, collection.adminEmails);
+    }
+
     const adminEmails = await getAllowedAdminEmails();
+    const isSuperAdmin = isSuperAdminEmail(email);
 
     return {
       email,
       isSignedIn: Boolean(email),
-      canEdit: await isAllowedAdminEmail(email),
-      isSuperAdmin: isSuperAdminEmail(email),
+      canEdit: isSuperAdmin || (email ? adminEmails.includes(email) : false),
+      isSuperAdmin,
       adminEmails,
     };
   } catch {
-    return {
-      email: null,
-      isSignedIn: false,
-      canEdit: false,
-      isSuperAdmin: false,
-      adminEmails: [],
-    };
+    return buildAccessContext(null, []);
   }
 }
