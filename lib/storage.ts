@@ -9,7 +9,8 @@ import {
 } from "@/lib/markers";
 import { MAP_IDS, MapId, MapMarkerGroups, MarkerCollection, StorageMode } from "@/lib/types";
 
-const LOCAL_DATA_FILE = path.join(process.cwd(), "data", "markers.json");
+const LOCAL_DATA_FILE = path.join(process.cwd(), "data", "markers.local.json");
+const SEED_DATA_FILE = path.join(process.cwd(), "data", "markers.json");
 const LEGACY_BLOB_PATHNAME = "pubg-map-editor/markers.json";
 const COLLECTION_META_BLOB_PATHNAME = "pubg-map-editor/meta.json";
 
@@ -48,7 +49,12 @@ function normalizeMetadata(input: unknown): MarkerCollectionMetadata {
 
 async function loadFromLocalFile(): Promise<MarkerCollection> {
   try {
-    const raw = await readFile(LOCAL_DATA_FILE, "utf8");
+    const raw = await readFile(LOCAL_DATA_FILE, "utf8").catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        return readFile(SEED_DATA_FILE, "utf8");
+      }
+      throw error;
+    });
     return normalizeMarkerCollection(JSON.parse(raw));
   } catch {
     return createEmptyCollection();

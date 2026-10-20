@@ -1,7 +1,5 @@
 import { loadMarkerCollection } from "@/lib/storage";
 
-export const SUPER_ADMIN_EMAIL = "redacted@example.com";
-
 function parseBootstrapEmails(rawValue: string | undefined): string[] {
   return (rawValue ?? "")
     .split(",")
@@ -20,7 +18,8 @@ export function normalizeEmails(emails: string[]): string[] {
 }
 
 export function isSuperAdminEmail(email?: string | null): boolean {
-  return (email ?? "").trim().toLowerCase() === SUPER_ADMIN_EMAIL;
+  const superAdminEmail = process.env.SUPER_ADMIN_GOOGLE_EMAIL?.trim().toLowerCase();
+  return Boolean(superAdminEmail && email?.trim().toLowerCase() === superAdminEmail);
 }
 
 export function getMergedAdminEmails(persistedAdminEmails: string[]): string[] {

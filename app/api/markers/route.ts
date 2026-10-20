@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const data = await loadMarkerCollection();
-  return NextResponse.json(data);
+  return NextResponse.json({ ...data, adminEmails: [] });
 }
 
 export async function POST(request: Request) {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     const saved = await saveMapGroups(current, body.mapId, body.groups);
-    return NextResponse.json(saved);
+    return NextResponse.json({ ...saved, adminEmails: [] });
   } catch (error) {
     const message = error instanceof Error ? error.message : "저장 중 오류가 발생했습니다.";
     return NextResponse.json({ message }, { status: 500 });

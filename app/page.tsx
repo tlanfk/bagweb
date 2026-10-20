@@ -16,7 +16,7 @@ export default async function HomePage() {
   return (
     <MapExperience
       mode="viewer"
-      initialCollection={collection}
+      initialCollection={{ ...collection, adminEmails: [] }}
       initialAccess={access}
       initialSelectedMapId={preferences.selectedMapId}
       initialIconBackgroundEnabled={preferences.iconBackgroundEnabled}

@@ -9,10 +9,7 @@
     "vikendi": "2026-03-19T09:46:50.278Z",
     "rondo": "2026-03-19T09:22:11.910Z"
   },
-  "adminEmails": [
-    "redacted@example.com",
-    "redacted@example.com"
-  ],
+  "adminEmails": [],
   "maps": {
     "erangel": {
       "car": [
@@ -3070,4 +3067,4 @@
       ]
     }
   }
-}\n
+}

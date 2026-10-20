@@ -1,9 +1,10 @@
 .next
 node_modules
 .vercel
-.env
-.env.local
-.env.*.local
+.env*
+!.env.local.example
+data/*.local.json
+*.tsbuildinfo
 npm-debug.log*
 Deston.png
 Erangel.png

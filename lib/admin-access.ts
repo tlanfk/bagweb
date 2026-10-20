@@ -34,7 +34,7 @@ export function buildAccessContext(
     isSignedIn: Boolean(normalizedEmail),
     canEdit: isSuperAdmin || (normalizedEmail ? adminEmails.includes(normalizedEmail) : false),
     isSuperAdmin,
-    adminEmails,
+    adminEmails: isSuperAdmin ? adminEmails : [],
   };
 }
 
@@ -65,7 +65,7 @@ export async function getServerAccessContext(
       isSignedIn: Boolean(email),
       canEdit: isSuperAdmin || (email ? adminEmails.includes(email) : false),
       isSuperAdmin,
-      adminEmails,
+      adminEmails: isSuperAdmin ? adminEmails : [],
     };
   } catch {
     return buildAccessContext(null, []);

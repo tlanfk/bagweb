@@ -12,13 +12,13 @@
 - 마커 타입은 실제 자산명 기준 `boat`, `car`, `gas`, `plane`, `garage`, `key`를 사용합니다.
 
 ## 저장 전략
-- 로컬 개발은 `data/markers.json` 파일을 fallback으로 사용합니다.
+- 로컬 개발은 `data/markers.json`을 공개 초기 데이터로 읽고, 저장은 Git에서 제외된 `data/markers.local.json`에 합니다.
 - Vercel 배포에서는 `BLOB_READ_WRITE_TOKEN`을 설정해 Vercel Blob 영속 저장을 사용합니다.
 - 좌표는 반응형 대응을 위해 원본 지도 기준 좌표(0~3072)로 저장합니다.
 
 ## 인증 전략
 - Google OAuth 로그인 기반으로 동작합니다.
-- `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ADMIN_GOOGLE_EMAILS` 환경변수를 사용합니다.
+- `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ADMIN_GOOGLE_EMAILS`, `SUPER_ADMIN_GOOGLE_EMAIL` 환경변수를 사용합니다.
 - 관리자 권한은 허용 이메일 화이트리스트를 서버에서 다시 검증해야 합니다.
 
 ## 역할 분담
@@ -31,3 +31,8 @@
 - 게임 대시보드처럼 묵직하고 선명한 대비를 유지합니다.
 - 장식은 과하지 않게, 얇은 외곽선과 은은한 글로우 위주로 정리합니다.
 - 우측 지도 영역에는 헤더와 안내 문구를 두지 않고 지도를 주인공으로 둡니다.
+
+## 공개 저장소 규칙
+- 개인 이메일, 토큰, 내부 IP를 코드나 초기 데이터에 넣지 않습니다.
+- 관리자 이메일 목록은 최종 관리자에게만 전달하며 공개 API와 페이지 데이터에서 제외합니다.
+- `.env.local`과 `data/markers.local.json`은 커밋하지 않습니다.
